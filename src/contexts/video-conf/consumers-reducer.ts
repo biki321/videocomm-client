@@ -1,7 +1,36 @@
-import { IPeerMedia } from "../../interfaces/peermedia.interface";
+import { IPeerMedia, IStreams } from "../../interfaces/peermedia.interface";
 import { types } from "mediasoup-client";
+import { ExactTrackKind } from "../../enums/exactTrackKind";
 
 const consumersInitialState: IPeerMedia[] = [];
+
+function createMediaStreams(consumers: types.Consumer[]): IStreams {
+  const res: IStreams = { webCamStream: null, screenShareStream: null };
+  if (consumers.length === 0) return res;
+
+  const webcamTracks: MediaStreamTrack[] = [];
+  const screenTracks: MediaStreamTrack[] = [];
+
+  consumers.forEach((consumer) => {
+    if (
+      consumer.appData.exactKind === ExactTrackKind.CAM ||
+      consumer.appData.exactKind === ExactTrackKind.MIC
+    )
+      webcamTracks.push(consumer.track);
+    else if (consumer.appData.exactKind === ExactTrackKind.SCREEEN)
+      screenTracks.push(consumer.track);
+  });
+
+  if (webcamTracks.length > 0 && screenTracks.length > 0) {
+    res.webCamStream = new MediaStream(webcamTracks);
+    res.screenShareStream = new MediaStream(screenTracks);
+  } else if (webcamTracks.length > 0)
+    res.webCamStream = new MediaStream(webcamTracks);
+  else if (screenTracks.length > 0)
+    res.screenShareStream = new MediaStream(screenTracks);
+
+  return res;
+}
 
 type ACTIONTYPE =
   | {
@@ -36,11 +65,24 @@ export function consumersReducer(
           ...state[index],
           producerId: [...state[index].producerId, action.payload.producerId],
           consumers: [...state[index].consumers, action.payload.consumer],
-          stream: new MediaStream(
-            [...state[index].consumers, action.payload.consumer].map(
-              (ele) => ele.track
-            )
-          ),
+          ...createMediaStreams([
+            ...state[index].consumers,
+            action.payload.consumer,
+          ]),
+          // webCamStream: new MediaStream(
+          //   [...state[index].consumers, action.payload.consumer]
+          //     .filter(
+          //       (ele) =>
+          //         ele.appData.exactKind === ExactTrackKind.CAM ||
+          //         ele.appData.exactKind === ExactTrackKind.MIC
+          //     )
+          //     .map((ele) => ele.track)
+          // ),
+          // screenShareStream: new MediaStream(
+          //   [...state[index].consumers, action.payload.consumer]
+          //     .filter((ele) => ele.appData.exactKind === ExactTrackKind.SCREEEN)
+          //     .map((ele) => ele.track)
+          // ),
         };
         return [
           ...state.filter(
@@ -57,7 +99,7 @@ export function consumersReducer(
             producerSendTransPortId: action.payload.producerSendTransPortId,
             producerId: [action.payload.producerId],
             consumers: [action.payload.consumer],
-            stream: new MediaStream([action.payload.consumer.track]),
+            ...createMediaStreams([action.payload.consumer]),
           },
         ];
       }
@@ -73,9 +115,7 @@ export function consumersReducer(
           console.log("consumer is paused", action.payload.id);
           return {
             ...peerMedia,
-            stream: new MediaStream(
-              peerMedia.consumers.map((ele) => ele.track)
-            ),
+            ...createMediaStreams(peerMedia.consumers),
           };
         } else return peerMedia;
       });
@@ -91,9 +131,7 @@ export function consumersReducer(
           console.log("consumer is resume", action.payload.id);
           return {
             ...peerMedia,
-            stream: new MediaStream(
-              peerMedia.consumers.map((ele) => ele.track)
-            ),
+            ...createMediaStreams(peerMedia.consumers),
           };
         } else return peerMedia;
       });
