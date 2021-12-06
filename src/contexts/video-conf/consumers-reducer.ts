@@ -13,11 +13,11 @@ function createMediaStreams(consumers: types.Consumer[]): IStreams {
 
   consumers.forEach((consumer) => {
     if (
-      consumer.appData.exactKind === ExactTrackKind.CAM ||
-      consumer.appData.exactKind === ExactTrackKind.MIC
+      consumer.appData.exactTrackKind === ExactTrackKind.CAM ||
+      consumer.appData.exactTrackKind === ExactTrackKind.MIC
     )
       webcamTracks.push(consumer.track);
-    else if (consumer.appData.exactKind === ExactTrackKind.SCREEEN)
+    else if (consumer.appData.exactTrackKind === ExactTrackKind.SCREEEN)
       screenTracks.push(consumer.track);
   });
 
@@ -48,6 +48,14 @@ type ACTIONTYPE =
   | {
       type: "CONSUMER-RESUME";
       payload: { id: string; producerSendTransPortId: string };
+    }
+  | {
+      type: "CONSUMER-CLOSE";
+      payload: {
+        id: string;
+        producerSendTransPortId: string;
+        exactTrackKind: ExactTrackKind;
+      };
     };
 
 export function consumersReducer(
@@ -69,20 +77,6 @@ export function consumersReducer(
             ...state[index].consumers,
             action.payload.consumer,
           ]),
-          // webCamStream: new MediaStream(
-          //   [...state[index].consumers, action.payload.consumer]
-          //     .filter(
-          //       (ele) =>
-          //         ele.appData.exactKind === ExactTrackKind.CAM ||
-          //         ele.appData.exactKind === ExactTrackKind.MIC
-          //     )
-          //     .map((ele) => ele.track)
-          // ),
-          // screenShareStream: new MediaStream(
-          //   [...state[index].consumers, action.payload.consumer]
-          //     .filter((ele) => ele.appData.exactKind === ExactTrackKind.SCREEEN)
-          //     .map((ele) => ele.track)
-          // ),
         };
         return [
           ...state.filter(
@@ -129,6 +123,25 @@ export function consumersReducer(
             .find((ele) => ele.id === action.payload.id)
             ?.resume();
           console.log("consumer is resume", action.payload.id);
+          return {
+            ...peerMedia,
+            ...createMediaStreams(peerMedia.consumers),
+          };
+        } else return peerMedia;
+      });
+    case "CONSUMER-CLOSE":
+      return state.map((peerMedia) => {
+        if (
+          peerMedia.producerSendTransPortId ===
+          action.payload.producerSendTransPortId
+        ) {
+          peerMedia.consumers = peerMedia.consumers.filter((ele) => {
+            if (ele.id === action.payload.id) {
+              ele.close();
+              return false;
+            } else return true;
+          });
+          console.log("consumer is closed", action.payload.id);
           return {
             ...peerMedia,
             ...createMediaStreams(peerMedia.consumers),
