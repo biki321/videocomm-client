@@ -14,6 +14,7 @@ import { Device, types } from "mediasoup-client";
 import { consumersReducer } from "./consumers-reducer";
 import { ExactTrackKind } from "../../enums/exactTrackKind";
 import { ScreenSharedSts } from "../../enums/screenSharedSts";
+import { useParams } from "react-router";
 
 interface IProps {
   children: JSX.Element;
@@ -28,10 +29,13 @@ interface IContextValue {
   localCamStream: MediaStream | null;
   localScreenStream: MediaStream | null;
   consumers: IPeerMedia[];
-  mute: IMute;
+  localMute: IMute;
+  toggleMicAndVideoDuringMeeting: (isMic: boolean) => void;
   toggleMicAndVideo: (isMic: boolean) => void;
   shareScreen: () => void;
   stopScreenShare: () => void;
+  callDrop: () => void;
+  triggerSetup: () => void;
   screenSharedSts: ScreenSharedSts | null;
 }
 
@@ -66,13 +70,17 @@ let paramsForVideo: types.ProducerOptions = {
   },
   appData: {
     exactTrackKind: ExactTrackKind.CAM,
+    paused: false,
   },
+  zeroRtpOnPause: true,
 };
 
 let paramsForAudio: types.ProducerOptions = {
   appData: {
     exactTrackKind: ExactTrackKind.MIC,
+    paused: false,
   },
+  zeroRtpOnPause: true,
 };
 
 let paramsForScreenShare: types.ProducerOptions = {
@@ -100,7 +108,9 @@ let paramsForScreenShare: types.ProducerOptions = {
   },
   appData: {
     exactTrackKind: ExactTrackKind.SCREEEN,
+    paused: false,
   },
+  zeroRtpOnPause: true,
 };
 
 export function useVideoConfContext() {
@@ -136,18 +146,6 @@ const startScreenCapture = () => {
   // });
 };
 
-const setProducerEvents = (producer: types.Producer) => {
-  producer.on("trackended", () => {
-    console.log("track ended");
-    // close track
-  });
-
-  producer.on("transportclose", () => {
-    console.log("transport ended");
-    // close track
-  });
-};
-
 export function VideoConfContextProvider({ children }: IProps) {
   const socket = useSocketContext();
   const device = useRef<types.Device | null>(null);
@@ -164,32 +162,54 @@ export function VideoConfContextProvider({ children }: IProps) {
   );
   const [localScreenStream, setLocalScreenStream] =
     useState<MediaStream | null>(null);
-  const [mute, setMute] = useState({ mutedMic: false, mutedVideo: false });
+  const [localMute, setLocalMute] = useState({
+    mutedMic: false,
+    mutedVideo: false,
+  });
   const [screenSharedSts, setScreenSharedSts] =
     useState<ScreenSharedSts | null>(null);
-  const roomName = "room";
+  // const roomName = "room";
+  const { roomName } = useParams();
+  console.log("room name ", roomName);
 
+  // to toggle video, isMic = false
   const toggleMicAndVideo = (isMic: boolean) => {
+    if (!localCamStream) return;
+    if (isMic) {
+      const enabled = localCamStream.getAudioTracks()[0].enabled;
+      localCamStream.getAudioTracks()[0].enabled = !enabled;
+      setLocalMute((prevState) => ({ ...prevState, mutedMic: enabled }));
+    } else {
+      const enabled = localCamStream.getVideoTracks()[0].enabled;
+      localCamStream.getVideoTracks()[0].enabled = !enabled;
+      setLocalMute((prevState) => ({ ...prevState, mutedVideo: enabled }));
+    }
+  };
+
+  // to toggle video, isMic = false
+  const toggleMicAndVideoDuringMeeting = (isMic: boolean) => {
     const producer = isMic
       ? producerForAudio.current
       : producerForVideo.current;
     if (!producer) return;
     if (producer.paused) {
       producer.resume();
-      socket?.emit("producer-media-resume", {
+      producer.appData.paused = producer.paused;
+      socket.emit("producer-media-resume", {
         producerId: producer?.id,
       });
       isMic
-        ? setMute((prevState) => ({ ...prevState, mutedMic: false }))
-        : setMute((prevState) => ({ ...prevState, mutedVideo: false }));
+        ? setLocalMute((prevState) => ({ ...prevState, mutedMic: false }))
+        : setLocalMute((prevState) => ({ ...prevState, mutedVideo: false }));
     } else {
       producer.pause();
+      producer.appData.paused = producer.paused;
       socket.emit("producer-media-pause", {
         producerId: producer?.id,
       });
       isMic
-        ? setMute((prevState) => ({ ...prevState, mutedMic: true }))
-        : setMute((prevState) => ({ ...prevState, mutedVideo: true }));
+        ? setLocalMute((prevState) => ({ ...prevState, mutedMic: true }))
+        : setLocalMute((prevState) => ({ ...prevState, mutedVideo: true }));
     }
   };
 
@@ -225,8 +245,27 @@ export function VideoConfContextProvider({ children }: IProps) {
             rtpParameters: params.rtpParameters,
             appData: params.appData,
           });
+
+          if (consumer.appData.paused) consumer.pause();
           // add the new consumer to state
-          console.log("at connectRecVTransport", consumer.appData);
+          console.log(
+            `at connectRecVTransport paused ${consumer.track.kind} ,
+            ${consumer.paused}`
+          );
+          console.log(
+            `at connectRecVTransport enabled ${consumer.track.kind} ,
+            ${consumer.track.enabled}`
+          );
+          console.log(
+            `at connectRecVTransport muted ${consumer.track.kind} ,
+            ${consumer.track.muted}`
+          );
+
+          consumer.on("transportclose", () => {
+            console.log("consumer transport closed");
+            consumer.close();
+          });
+
           consumersDispatch({
             type: "CONSUMER-ADD",
             payload: {
@@ -238,6 +277,7 @@ export function VideoConfContextProvider({ children }: IProps) {
 
           // the server consumer started with media paused
           // so we need to inform the server to resume
+          if (consumer.appData.paused) return;
           socket?.emit("consumer-resume", {
             serverConsumerId: params.serverConsumerId,
           });
@@ -264,7 +304,12 @@ export function VideoConfContextProvider({ children }: IProps) {
   const getProducers = useCallback(() => {
     socket?.emit(
       "getProducers",
-      (producers: { producerId: string; exactTrackKind: ExactTrackKind }[]) => {
+      (
+        producers: {
+          producerId: string;
+          exactTrackKind: ExactTrackKind;
+        }[]
+      ) => {
         console.log(producers);
         // for each of the producer create a consumer
         producers.forEach(signalNewConsumerTransport);
@@ -277,11 +322,14 @@ export function VideoConfContextProvider({ children }: IProps) {
     // to send media to the Router
     // https://mediasoup.org/documentation/v3/mediasoup-client/api/#transport-produce
     // this action will trigger the 'connect' and 'produce' events above
+    paramsForVideo.appData.paused = !paramsForVideo.track?.enabled;
     producerForVideo.current = await producerTransport.current!.produce(
       paramsForVideo
     );
+
     setProducerEvents(producerForVideo.current!);
 
+    paramsForAudio.appData.paused = !paramsForAudio.track?.enabled;
     producerForAudio.current = await producerTransport.current!.produce(
       paramsForAudio
     );
@@ -289,6 +337,7 @@ export function VideoConfContextProvider({ children }: IProps) {
   }, []);
 
   const connectScreenShareSendTransport = useCallback(async () => {
+    paramsForScreenShare.appData.paused = !paramsForScreenShare.track?.enabled;
     producerForScreenShare.current = await producerTransport.current!.produce(
       paramsForScreenShare
     );
@@ -311,14 +360,12 @@ export function VideoConfContextProvider({ children }: IProps) {
           }
 
           console.log(data.params);
-
           // creates a new WebRTC Transport to send media
           // based on the server's producer transport params
           // https://mediasoup.org/documentation/v3/mediasoup-client/api/#TransportOptions
           producerTransport.current = device.current!.createSendTransport(
             data.params
           );
-
           // https://mediasoup.org/documentation/v3/communication-between-client-and-server/#producing-media
           // this event is raised when a first call to transport.produce() is made
           // see connectSendTransport() below
@@ -331,7 +378,6 @@ export function VideoConfContextProvider({ children }: IProps) {
                 socket.emit("transport-connect", {
                   dtlsParameters,
                 });
-
                 // Tell the transport that parameters were transmitted.
                 callback();
               } catch (error) {
@@ -344,7 +390,6 @@ export function VideoConfContextProvider({ children }: IProps) {
             "produce",
             async (parameters, callback, errback) => {
               console.log(parameters);
-
               try {
                 // tell the server to create a Producer
                 // with the following parameters and produce
@@ -414,7 +459,6 @@ export function VideoConfContextProvider({ children }: IProps) {
                 dtlsParameters,
                 serverConsumerTransportId: params.id,
               });
-
               // Tell the transport that parameters were transmitted.
               callback();
             } catch (error) {
@@ -495,14 +539,50 @@ export function VideoConfContextProvider({ children }: IProps) {
       setScreenSharedSts(null);
     }
   };
+  const setProducerEvents = (producer: types.Producer) => {
+    producer.on("trackended", () => {
+      console.log("track ended");
+      if (producer.appData.exactTrackKind === ExactTrackKind.SCREEEN) {
+        stopScreenShare();
+      }
+      // close track
+    });
+
+    producer.on("transportclose", () => {
+      console.log("transport ended");
+      // close track
+      producer.close();
+    });
+  };
+
+  const callDrop = () => {
+    producerTransport.current?.close();
+    consumerTransport.current?.close();
+
+    socket?.emit("calldrop", ({ ok }: { ok: boolean }) => {
+      console.log("dropped", ok);
+    });
+    consumersDispatch({
+      type: "CONSUMERS_CLEAN",
+    });
+    setLocalCamStream(null);
+    setLocalScreenStream(null);
+    // socket.disconnect();
+  };
+
+  useEffect(() => {
+    (async () => {
+      const stream = await getLocalStream();
+      streamSuccess(stream);
+      triggerSetup();
+    })();
+  }, []);
 
   useEffect(() => {
     console.log("inside useeffect video conf contxt");
-    socket?.on("connection-success", async ({ socketId }) => {
+    socket?.on("trigger", async ({ socketId }) => {
       console.log(socketId);
       try {
-        const stream = await getLocalStream();
-        streamSuccess(stream);
         const rtpCapabilitiesData = await joinRoom();
         console.log(`Server Router RTP Capabilities... ${rtpCapabilitiesData}`);
         // we assign to mutable obj and will be used when
@@ -545,6 +625,7 @@ export function VideoConfContextProvider({ children }: IProps) {
     socket?.on(
       "consumer-resume",
       (data: { id: string; producerSendTransPortId: string }) => {
+        console.log("at consumer resume socket ");
         consumersDispatch({
           type: "CONSUMER-RESUME",
           payload: data,
@@ -585,63 +666,28 @@ export function VideoConfContextProvider({ children }: IProps) {
     streamSuccess,
   ]);
 
+  const triggerSetup = () => {
+    if (socket.connected) socket?.emit("trigger");
+    else alert("socket not connected");
+  };
+
   return (
     <VideoConfContext.Provider
       value={{
         localCamStream,
         localScreenStream,
         consumers,
-        mute,
+        localMute,
+        toggleMicAndVideoDuringMeeting,
         toggleMicAndVideo,
         shareScreen,
         stopScreenShare,
+        callDrop,
         screenSharedSts,
+        triggerSetup,
       }}
     >
       {children}
     </VideoConfContext.Provider>
   );
 }
-
-// socket?.on(
-//   "producer-closed",
-//   ({ remoteProducerId, producerSendTransPortId }) => {
-//     // server notification is received when a producer is closed
-//     // we need to close the client-side consumer and associated transport
-//     // also remove the consumer transport from the list
-
-//     setConsumers((prevState) => {
-//       const index = prevState.findIndex(
-//         (ele) => ele.producerSendTransPortId === producerSendTransPortId
-//       );
-
-//       if (index !== -1) {
-//         const consumer = prevState[index].consumers.find(
-//           (ele) => remoteProducerId === ele.producerId
-//         );
-//         if (consumer) {
-//           const oneELe = {
-//             ...prevState[index],
-//             producerId: prevState[index].producerId.filter(
-//               (ele) => ele !== remoteProducerId
-//             ),
-//             consumers: prevState[index].consumers.filter(
-//               (ele) => ele.producerId !== remoteProducerId
-//             ),
-//           };
-//           oneELe["stream"] = new MediaStream(
-//             oneELe.consumers.map((ele) => ele.track)
-//           );
-//           return [
-//             ...prevState.filter(
-//               (ele) =>
-//                 ele.producerSendTransPortId !== producerSendTransPortId
-//             ),
-//             oneELe,
-//           ];
-//         }
-//       }
-//       return prevState;
-//     });
-//   }
-// );

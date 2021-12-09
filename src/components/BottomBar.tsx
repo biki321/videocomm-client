@@ -1,46 +1,62 @@
 import { useVideoConfContext } from "../contexts/video-conf/video-conf-context";
 import { ScreenSharedSts } from "../enums/screenSharedSts";
-import { CameraIcon, MicIcon, ScreenShareIcon } from "./IconComps";
+import {
+  CallDropIcon,
+  CameraIcon,
+  MicIcon,
+  ScreenShareIcon,
+  StopScreenShareIcon,
+} from "./IconComps";
 
 export function BottomBar() {
   const {
-    mute,
-    toggleMicAndVideo,
+    localMute,
+    toggleMicAndVideoDuringMeeting,
     shareScreen,
     stopScreenShare,
     screenSharedSts,
+    callDrop,
   } = useVideoConfContext();
 
   return (
     <div>
-      {mute && toggleMicAndVideo && shareScreen && stopScreenShare && (
-        <div className="flex justify-center space-x-7">
-          <div
-            onClick={() => toggleMicAndVideo && toggleMicAndVideo(true)}
-            className=""
-          >
-            {mute.mutedMic ? (
-              <MicIcon muted={true} />
-            ) : (
-              <MicIcon muted={false} />
-            )}
-          </div>
-          <div onClick={() => toggleMicAndVideo && toggleMicAndVideo(false)}>
-            {mute.mutedVideo ? (
-              <CameraIcon muted={true} />
-            ) : (
-              <CameraIcon muted={false} />
-            )}
-          </div>
-          {screenSharedSts === ScreenSharedSts.LOCAL ? (
-            <div onClick={stopScreenShare}>stop screen</div>
-          ) : screenSharedSts === ScreenSharedSts.REMOTE ? null : (
-            <div onClick={shareScreen}>
-              <ScreenShareIcon />
+      {localMute &&
+        toggleMicAndVideoDuringMeeting &&
+        shareScreen &&
+        stopScreenShare &&
+        callDrop && (
+          <div className="flex justify-center space-x-7">
+            <div
+              onClick={() => toggleMicAndVideoDuringMeeting(true)}
+              className=""
+            >
+              {localMute.mutedMic ? (
+                <MicIcon muted={true} />
+              ) : (
+                <MicIcon muted={false} />
+              )}
             </div>
-          )}
-        </div>
-      )}
+            <div onClick={() => toggleMicAndVideoDuringMeeting(false)}>
+              {localMute.mutedVideo ? (
+                <CameraIcon muted={true} />
+              ) : (
+                <CameraIcon muted={false} />
+              )}
+            </div>
+            {screenSharedSts === ScreenSharedSts.LOCAL ? (
+              <div onClick={stopScreenShare}>
+                <StopScreenShareIcon />
+              </div>
+            ) : screenSharedSts === ScreenSharedSts.REMOTE ? null : (
+              <div onClick={shareScreen}>
+                <ScreenShareIcon />
+              </div>
+            )}
+            <div onClick={callDrop}>
+              <CallDropIcon />
+            </div>
+          </div>
+        )}
     </div>
   );
 }

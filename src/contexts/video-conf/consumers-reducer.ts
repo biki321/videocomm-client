@@ -56,7 +56,8 @@ type ACTIONTYPE =
         producerSendTransPortId: string;
         exactTrackKind: ExactTrackKind;
       };
-    };
+    }
+  | { type: "CONSUMERS_CLEAN" };
 
 export function consumersReducer(
   state: typeof consumersInitialState,
@@ -103,14 +104,17 @@ export function consumersReducer(
           peerMedia.producerSendTransPortId ===
           action.payload.producerSendTransPortId
         ) {
-          peerMedia.consumers
-            .find((ele) => ele.id === action.payload.id)
-            ?.pause();
+          const consumer = peerMedia.consumers.find(
+            (ele) => ele.id === action.payload.id
+          );
+          consumer?.pause();
+          if (consumer) consumer.appData.paused = true;
           console.log("consumer is paused", action.payload.id);
-          return {
-            ...peerMedia,
-            ...createMediaStreams(peerMedia.consumers),
-          };
+          // return {
+          //   ...peerMedia,
+          //   ...createMediaStreams(peerMedia.consumers),
+          // };
+          return peerMedia;
         } else return peerMedia;
       });
     case "CONSUMER-RESUME":
@@ -119,14 +123,17 @@ export function consumersReducer(
           peerMedia.producerSendTransPortId ===
           action.payload.producerSendTransPortId
         ) {
-          peerMedia.consumers
-            .find((ele) => ele.id === action.payload.id)
-            ?.resume();
+          const consumer = peerMedia.consumers.find(
+            (ele) => ele.id === action.payload.id
+          );
+          consumer?.resume();
+          if (consumer) consumer.appData.paused = false;
           console.log("consumer is resume", action.payload.id);
-          return {
-            ...peerMedia,
-            ...createMediaStreams(peerMedia.consumers),
-          };
+          // return {
+          //   ...peerMedia,
+          //   ...createMediaStreams(peerMedia.consumers),
+          // };
+          return peerMedia;
         } else return peerMedia;
       });
     case "CONSUMER-CLOSE":
@@ -138,6 +145,7 @@ export function consumersReducer(
           peerMedia.consumers = peerMedia.consumers.filter((ele) => {
             if (ele.id === action.payload.id) {
               ele.close();
+              console.log("ele closed", ele.id);
               return false;
             } else return true;
           });
@@ -146,8 +154,11 @@ export function consumersReducer(
             ...peerMedia,
             ...createMediaStreams(peerMedia.consumers),
           };
+          // return peerMedia;
         } else return peerMedia;
       });
+    case "CONSUMERS_CLEAN":
+      return [];
     default:
       return state;
   }
