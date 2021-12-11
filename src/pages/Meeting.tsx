@@ -1,10 +1,10 @@
-import { types } from "mediasoup-client";
-import { useState } from "react";
+// import { types } from "mediasoup-client";
+// import { useState } from "react";
 import { BottomBar } from "../components/BottomBar";
-import { CameraIcon, MicIcon } from "../components/IconComps";
+// import { CameraIcon, MicIcon } from "../components/IconComps";
 import PeerVideo from "../components/PeerVideo";
 import { useVideoConfContext } from "../contexts/video-conf/video-conf-context";
-import { ExactTrackKind } from "../enums/exactTrackKind";
+// import { ExactTrackKind } from "../enums/exactTrackKind";
 import { IPeerMedia } from "../interfaces/peermedia.interface";
 
 function showScreenShare(consumers: IPeerMedia[] | undefined) {
@@ -13,28 +13,13 @@ function showScreenShare(consumers: IPeerMedia[] | undefined) {
     return (
       <VideoWrapper maxW="max-w-6xl">
         <PeerVideo
+          local={false}
           key={peerMedia.screenShareStream.id}
           stream={peerMedia.screenShareStream}
-          // videoMuted={false}
-          // micMuted={false}
         />
       </VideoWrapper>
     );
   } else return null;
-}
-
-function getMuteStatus(consumers: types.Consumer[]) {
-  let muted = {
-    videoMuted: false,
-    micMuted: false,
-  };
-  consumers.forEach((ele) => {
-    if (ele.appData.exactTrackKind === ExactTrackKind.CAM)
-      muted.videoMuted = ele.paused;
-    else if (ele.appData.exactTrackKind === ExactTrackKind.MIC)
-      muted.micMuted = ele.paused;
-  });
-  return muted;
 }
 
 function VideoWrapper({
@@ -44,8 +29,9 @@ function VideoWrapper({
   children: JSX.Element;
   maxW?: string;
 }) {
-  const className = maxW ?? "max-w-md";
-  return <div className={className}>{children}</div>;
+  // const className = maxW ?? "max-w-md w-full h-80";
+  // const className = maxW ?? "w-96 aspect-w-4 aspect-h-3";
+  return <div className="">{children}</div>;
 }
 
 export default function Meeting() {
@@ -53,32 +39,28 @@ export default function Meeting() {
     localCamStream,
     localScreenStream,
     consumers,
-    triggerSetup,
-    toggleMicAndVideo,
-    toggleMicAndVideoDuringMeeting,
-    localMute,
+    // triggerSetup,
+    // toggleMicAndVideo,
+    // toggleMicAndVideoDuringMeeting,
+    // localMute,
   } = useVideoConfContext();
-  const [ready, setReady] = useState(false);
+  // const [ready, setReady] = useState(false);
 
   //this is either local screen share or remote share, but only one
   const screenMediaEle = localScreenStream ? (
-    <VideoWrapper maxW="max-w-6xl">
-      <PeerVideo
-        stream={localScreenStream}
-        // videoMuted={localMute ? localMute.mutedVideo : false}
-        // micMuted={localMute ? localMute.mutedMic : false}
-      />
+    <VideoWrapper maxW="max-w-6xl w-full">
+      <PeerVideo stream={localScreenStream} local={true} />
     </VideoWrapper>
   ) : (
     showScreenShare(consumers)
   );
 
-  const joinHandle = () => {
-    if (triggerSetup) {
-      triggerSetup();
-      setReady(true);
-    }
-  };
+  // const joinHandle = () => {
+  //   if (triggerSetup) {
+  //     triggerSetup();
+  //     setReady(true);
+  //   }
+  // };
 
   // return !ready ? <AskComp /> : <Final />;
   return (
@@ -98,36 +80,26 @@ export default function Meeting() {
               : "xl:flex-row justify-center items-center space-x-2 flex-wrap"
           }`}
         >
-          {localCamStream ? (
+          {localCamStream !== undefined ? (
             <VideoWrapper
-              maxW={screenMediaEle ? "max-w-md xl:max-w-xs" : undefined}
+              maxW={screenMediaEle ? "max-w-md xl:max-w-xs w-full" : undefined}
+              key={localCamStream?.id}
             >
-              <PeerVideo
-                stream={localCamStream}
-                // videoMuted={localMute ? localMute.mutedVideo : false}
-                // micMuted={localMute ? localMute.mutedMic : false}
-              />
+              <PeerVideo stream={localCamStream} local={true} />
             </VideoWrapper>
           ) : null}
 
           {consumers?.map((peerMedia, index) => {
-            if (peerMedia.webCamStream) {
-              // const { videoMuted, micMuted } = getMuteStatus(
-              //   peerMedia.consumers
-              // );
-              return (
-                <VideoWrapper
-                  maxW={screenMediaEle ? "max-w-md xl:max-w-xs" : undefined}
-                  key={peerMedia.webCamStream.id}
-                >
-                  <PeerVideo
-                    stream={peerMedia.webCamStream}
-                    // videoMuted={videoMuted}
-                    // micMuted={micMuted}
-                  />
-                </VideoWrapper>
-              );
-            } else return null;
+            return (
+              <VideoWrapper
+                maxW={
+                  screenMediaEle ? "max-w-md xl:max-w-xs w-full" : undefined
+                }
+                key={peerMedia.webCamStream ? peerMedia.webCamStream.id : index}
+              >
+                <PeerVideo local={false} stream={peerMedia.webCamStream} />
+              </VideoWrapper>
+            );
           })}
         </div>
       </div>

@@ -3,53 +3,53 @@ import { MicIcon } from "./IconComps";
 
 interface IProps {
   stream: MediaStream | null;
-  //   videoMuted: boolean;
-  //   micMuted: boolean;
+  local: boolean;
 }
 
-export default function PeerVideo({ stream }: IProps) {
+export default function PeerVideo({ stream, local }: IProps) {
+  console.log("at peervideo");
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  console.log("peervideo track", stream?.getVideoTracks()[0]);
 
   useEffect(() => {
-    console.log("effect peervideo", stream?.getVideoTracks()[0]);
-    videoRef.current!.srcObject = stream;
-  }, [stream]);
+    if (videoRef.current) {
+      console.log("effect at peervideo", local, stream?.getTracks());
+      videoRef.current.srcObject = stream;
+    }
+  }, [local, stream]);
 
   const videoMuted =
-    stream &&
-    stream.getVideoTracks().length > 0 &&
-    !stream.getVideoTracks()[0].enabled;
-
+    stream === null || (stream && stream.getVideoTracks().length === 0);
   const micMuted =
-    stream &&
-    stream.getAudioTracks().length > 0 &&
-    !stream.getAudioTracks()[0].enabled;
+    stream === null || (stream && stream.getAudioTracks().length === 0);
+  const showVideoEle = stream !== null;
 
   return (
     <>
-      <div className="relative">
+      <div className="relative w-96 aspect-w-4 aspect-h-3">
         {videoMuted ? (
           <div
             className="bg-gray-700 w-full h-full rounded-md absolute
-      right-0 bottom-0 flex justify-center items-center"
+         right-0 bottom-0 flex justify-center items-center z-10"
           >
             <h1 className="font-bold text-xl text-white">Biki Deka</h1>
           </div>
         ) : null}
-        <h3 className="font-medium text-white absolute left-2 bottom-1">
-          Biki Deka
-        </h3>
-        <video className="rounded-md" ref={videoRef} autoPlay></video>
-        {micMuted ? (
-          <div className="absolute right-2 bottom-1">
-            <MicIcon muted={true} />
-          </div>
+        {showVideoEle ? (
+          <video className="rounded-md" ref={videoRef} autoPlay></video>
         ) : null}
+        <div className="z-10">
+          <h3 className="font-medium text-white absolute left-2 bottom-1">
+            Biki Deka
+          </h3>
+          {micMuted ? (
+            <div className="absolute right-2 bottom-1">
+              <MicIcon muted={true} />
+            </div>
+          ) : (
+            <div></div>
+          )}
+        </div>
       </div>
-      <div className="h-8 text-white">
-        {stream?.getVideoTracks()[0].muted.toString()}
-      </div>{" "}
     </>
   );
 }

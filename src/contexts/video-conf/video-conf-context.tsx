@@ -118,6 +118,7 @@ export function useVideoConfContext() {
 }
 
 const getLocalStream = () => {
+  console.log("getlocalstream", navigator.mediaDevices);
   return navigator.mediaDevices.getUserMedia({
     audio: true,
     video: {
@@ -188,6 +189,7 @@ export function VideoConfContextProvider({ children }: IProps) {
 
   // to toggle video, isMic = false
   const toggleMicAndVideoDuringMeeting = (isMic: boolean) => {
+    console.log("at toggleMicAndVideoDuringMeeting", isMic);
     const producer = isMic
       ? producerForAudio.current
       : producerForVideo.current;
@@ -198,18 +200,35 @@ export function VideoConfContextProvider({ children }: IProps) {
       socket.emit("producer-media-resume", {
         producerId: producer?.id,
       });
-      isMic
-        ? setLocalMute((prevState) => ({ ...prevState, mutedMic: false }))
-        : setLocalMute((prevState) => ({ ...prevState, mutedVideo: false }));
+      if (isMic)
+        setLocalMute((prevState) => ({ ...prevState, mutedMic: false }));
+      else setLocalMute((prevState) => ({ ...prevState, mutedVideo: false }));
+
+      setLocalCamStream((prevState) => {
+        console.log("at setLocalCamStream 1st");
+        if (prevState) {
+          return new MediaStream([...prevState.getTracks(), producer.track!]);
+        } else return new MediaStream([producer.track!]);
+      });
     } else {
       producer.pause();
       producer.appData.paused = producer.paused;
       socket.emit("producer-media-pause", {
         producerId: producer?.id,
       });
-      isMic
-        ? setLocalMute((prevState) => ({ ...prevState, mutedMic: true }))
-        : setLocalMute((prevState) => ({ ...prevState, mutedVideo: true }));
+      if (isMic)
+        setLocalMute((prevState) => ({ ...prevState, mutedMic: true }));
+      else setLocalMute((prevState) => ({ ...prevState, mutedVideo: true }));
+
+      setLocalCamStream((prevState) => {
+        console.log("at setLocalCamStream 2nd");
+        if (!prevState) return null;
+        const tracks = prevState
+          .getTracks()
+          .filter((ele) => ele.id !== producer.track!.id);
+        if (tracks.length > 0) return new MediaStream(tracks);
+        else return null;
+      });
     }
   };
 
@@ -570,14 +589,7 @@ export function VideoConfContextProvider({ children }: IProps) {
     // socket.disconnect();
   };
 
-  useEffect(() => {
-    (async () => {
-      const stream = await getLocalStream();
-      streamSuccess(stream);
-      triggerSetup();
-    })();
-  }, []);
-
+  //this effect only for socket event listeners
   useEffect(() => {
     console.log("inside useeffect video conf contxt");
     socket?.on("trigger", async ({ socketId }) => {
@@ -665,6 +677,17 @@ export function VideoConfContextProvider({ children }: IProps) {
     socket,
     streamSuccess,
   ]);
+
+  useEffect(() => {
+    (async () => {
+      const stream = await getLocalStream();
+      console.log("2 efect stream", stream);
+      console.log("2 efect stream", stream.getTracks());
+
+      streamSuccess(stream);
+      triggerSetup();
+    })();
+  }, []);
 
   const triggerSetup = () => {
     if (socket.connected) socket?.emit("trigger");

@@ -13,11 +13,15 @@ function createMediaStreams(consumers: types.Consumer[]): IStreams {
 
   consumers.forEach((consumer) => {
     if (
-      consumer.appData.exactTrackKind === ExactTrackKind.CAM ||
-      consumer.appData.exactTrackKind === ExactTrackKind.MIC
+      (consumer.appData.exactTrackKind === ExactTrackKind.CAM ||
+        consumer.appData.exactTrackKind === ExactTrackKind.MIC) &&
+      consumer.track.enabled
     )
       webcamTracks.push(consumer.track);
-    else if (consumer.appData.exactTrackKind === ExactTrackKind.SCREEEN)
+    else if (
+      consumer.appData.exactTrackKind === ExactTrackKind.SCREEEN &&
+      consumer.track.enabled
+    )
       screenTracks.push(consumer.track);
   });
 
@@ -110,11 +114,11 @@ export function consumersReducer(
           consumer?.pause();
           if (consumer) consumer.appData.paused = true;
           console.log("consumer is paused", action.payload.id);
-          // return {
-          //   ...peerMedia,
-          //   ...createMediaStreams(peerMedia.consumers),
-          // };
-          return peerMedia;
+          return {
+            ...peerMedia,
+            ...createMediaStreams(peerMedia.consumers),
+          };
+          // return peerMedia;
         } else return peerMedia;
       });
     case "CONSUMER-RESUME":
@@ -129,27 +133,6 @@ export function consumersReducer(
           consumer?.resume();
           if (consumer) consumer.appData.paused = false;
           console.log("consumer is resume", action.payload.id);
-          // return {
-          //   ...peerMedia,
-          //   ...createMediaStreams(peerMedia.consumers),
-          // };
-          return peerMedia;
-        } else return peerMedia;
-      });
-    case "CONSUMER-CLOSE":
-      return state.map((peerMedia) => {
-        if (
-          peerMedia.producerSendTransPortId ===
-          action.payload.producerSendTransPortId
-        ) {
-          peerMedia.consumers = peerMedia.consumers.filter((ele) => {
-            if (ele.id === action.payload.id) {
-              ele.close();
-              console.log("ele closed", ele.id);
-              return false;
-            } else return true;
-          });
-          console.log("consumer is closed", action.payload.id);
           return {
             ...peerMedia,
             ...createMediaStreams(peerMedia.consumers),
@@ -157,6 +140,29 @@ export function consumersReducer(
           // return peerMedia;
         } else return peerMedia;
       });
+    case "CONSUMER-CLOSE":
+      return state
+        .map((peerMedia) => {
+          if (
+            peerMedia.producerSendTransPortId ===
+            action.payload.producerSendTransPortId
+          ) {
+            peerMedia.consumers = peerMedia.consumers.filter((ele) => {
+              if (ele.id === action.payload.id) {
+                ele.close();
+                console.log("ele closed", ele.id);
+                return false;
+              } else return true;
+            });
+            console.log("consumer is closed", action.payload.id);
+            return {
+              ...peerMedia,
+              ...createMediaStreams(peerMedia.consumers),
+            };
+            // return peerMedia;
+          } else return peerMedia;
+        })
+        .filter((ele) => ele.consumers.length > 0);
     case "CONSUMERS_CLEAN":
       return [];
     default:
