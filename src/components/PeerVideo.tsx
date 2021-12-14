@@ -17,15 +17,25 @@ export default function PeerVideo({ stream, local }: IProps) {
     }
   }, [local, stream]);
 
-  const videoMuted =
-    stream === null || (stream && stream.getVideoTracks().length === 0);
-  const micMuted =
-    stream === null || (stream && stream.getAudioTracks().length === 0);
-  const showVideoEle = stream !== null;
+  let videoMuted;
+  let micMuted;
+  let showVideoEle;
+
+  if (!local) {
+    videoMuted =
+      stream === null || (stream && stream.getVideoTracks().length === 0);
+    micMuted =
+      stream === null || (stream && stream.getAudioTracks().length === 0);
+    showVideoEle = stream !== null;
+  } else {
+    videoMuted = stream && !stream.getVideoTracks()[0].enabled;
+    micMuted = stream && !stream.getAudioTracks()[0].enabled;
+    showVideoEle = true;
+  }
 
   return (
     <>
-      <div className="relative w-96 aspect-w-4 aspect-h-3">
+      <div className="relative w-full aspect-w-4 aspect-h-3">
         {videoMuted ? (
           <div
             className="bg-gray-700 w-full h-full rounded-md absolute

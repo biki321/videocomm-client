@@ -204,12 +204,12 @@ export function VideoConfContextProvider({ children }: IProps) {
         setLocalMute((prevState) => ({ ...prevState, mutedMic: false }));
       else setLocalMute((prevState) => ({ ...prevState, mutedVideo: false }));
 
-      setLocalCamStream((prevState) => {
-        console.log("at setLocalCamStream 1st");
-        if (prevState) {
-          return new MediaStream([...prevState.getTracks(), producer.track!]);
-        } else return new MediaStream([producer.track!]);
-      });
+      // setLocalCamStream((prevState) => {
+      //   console.log("at setLocalCamStream 1st");
+      //   if (prevState) {
+      //     return new MediaStream([...prevState.getTracks(), producer.track!]);
+      //   } else return new MediaStream([producer.track!]);
+      // });
     } else {
       producer.pause();
       producer.appData.paused = producer.paused;
@@ -220,15 +220,15 @@ export function VideoConfContextProvider({ children }: IProps) {
         setLocalMute((prevState) => ({ ...prevState, mutedMic: true }));
       else setLocalMute((prevState) => ({ ...prevState, mutedVideo: true }));
 
-      setLocalCamStream((prevState) => {
-        console.log("at setLocalCamStream 2nd");
-        if (!prevState) return null;
-        const tracks = prevState
-          .getTracks()
-          .filter((ele) => ele.id !== producer.track!.id);
-        if (tracks.length > 0) return new MediaStream(tracks);
-        else return null;
-      });
+      // setLocalCamStream((prevState) => {
+      //   console.log("at setLocalCamStream 2nd");
+      //   if (!prevState) return null;
+      //   const tracks = prevState
+      //     .getTracks()
+      //     .filter((ele) => ele.id !== producer.track!.id);
+      //   if (tracks.length > 0) return new MediaStream(tracks);
+      //   else return null;
+      // });
     }
   };
 
@@ -538,15 +538,16 @@ export function VideoConfContextProvider({ children }: IProps) {
       track: screenStream.getVideoTracks()[0],
     };
     setLocalScreenStream(screenStream);
+    setScreenSharedSts(ScreenSharedSts.LOCAL);
     //this will create producer on server & client
     await connectScreenShareSendTransport();
-    setScreenSharedSts(ScreenSharedSts.LOCAL);
   };
 
   const stopScreenShare = () => {
     if (producerForScreenShare.current) {
       const producerId = producerForScreenShare.current.id;
       producerForScreenShare.current.close();
+      producerForScreenShare.current = null;
       paramsForScreenShare = {
         ...paramsForScreenShare,
         track: undefined,
@@ -685,7 +686,7 @@ export function VideoConfContextProvider({ children }: IProps) {
       console.log("2 efect stream", stream.getTracks());
 
       streamSuccess(stream);
-      triggerSetup();
+      // triggerSetup();
     })();
   }, []);
 

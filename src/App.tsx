@@ -9,15 +9,7 @@ export default function App() {
     <BrowserRouter>
       <SocketContextProvider>
         <Routes>
-          <Route
-            path="/"
-            element={
-              // <VideoConfContextProvider>
-              //   <Meeting />
-              // </VideoConfContextProvider>
-              <Landing />
-            }
-          />
+          <Route path="/" element={<Landing />} />
           <Route
             path="/:roomName"
             element={
