@@ -1,9 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import CanvasBoard from "../components/CanvasBoard";
 import { BottomBar } from "../components/BottomBar";
 import PeerVideo from "../components/PeerVideo";
 import Permission from "../components/Permission";
 import ScreenSharing from "../components/ScreenSharing";
+import { useSocketContext } from "../contexts/socket-context";
 import { useVideoConfContext } from "../contexts/video-conf/video-conf-context";
+import { CanvasSharedSts } from "../enums/canvasSharedSts";
 import { IPeerMedia } from "../interfaces/peermedia.interface";
 
 function showScreenShare(consumers: IPeerMedia[] | undefined) {
@@ -33,9 +36,26 @@ export function VideoWrapper({
 }
 
 export default function Meeting() {
+  const socket = useSocketContext();
   const { localCamStream, localScreenStream, consumers } =
     useVideoConfContext();
   const [ready, setReady] = useState(false);
+  const [canvasSts, setCanvasSts] = useState<CanvasSharedSts | null>(null);
+
+  useEffect(() => {
+    socket.on("sharedCanvas", () => {
+      console.log("effect meeting sharedCanvas");
+      setCanvasSts(CanvasSharedSts.REMOTE);
+    });
+    socket.on("closeSharedCanvas", () => {
+      setCanvasSts(null);
+    });
+
+    return () => {
+      socket.off("sharedCanvas");
+      socket.off("closeSharedCanvas");
+    };
+  }, [socket]);
 
   //this is either local screen share or remote share, but only one
   const screenMediaEle = localScreenStream ? (
@@ -54,7 +74,7 @@ export default function Meeting() {
         }`}
       >
         <div className={`my-2 ${screenMediaEle ? "xl:flex-1" : ""}`}>
-          {screenMediaEle}
+          {!canvasSts ? screenMediaEle : <CanvasBoard />}
         </div>
         <div
           className={`space-y-2 flex flex-col items-center ${
@@ -88,7 +108,7 @@ export default function Meeting() {
       </div>
 
       <div className="py-3">
-        <BottomBar />
+        <BottomBar canvasSts={canvasSts} setCanvasSts={setCanvasSts} />
       </div>
     </div>
   ) : (

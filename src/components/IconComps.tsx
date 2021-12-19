@@ -3,6 +3,8 @@ import {
   BsFillMicMuteFill,
   BsFillCameraVideoFill,
   BsFillCameraVideoOffFill,
+  BsFillPencilFill,
+  BsFillStopCircleFill,
 } from "react-icons/bs";
 
 import { MdScreenShare, MdCallEnd, MdStopScreenShare } from "react-icons/md";
@@ -63,6 +65,25 @@ function StopScreenShareIcon() {
     </IconWrapper>
   );
 }
+function CanvasOpenIcon() {
+  return (
+    <IconWrapper>
+      <IconContext.Provider value={iconstyle}>
+        <BsFillPencilFill />
+      </IconContext.Provider>
+    </IconWrapper>
+  );
+}
+
+function StopCanvasIcon() {
+  return (
+    <IconWrapper>
+      <IconContext.Provider value={{ ...iconstyle, color: "red" }}>
+        <BsFillStopCircleFill />
+      </IconContext.Provider>
+    </IconWrapper>
+  );
+}
 
 function CallDropIcon() {
   return (
@@ -80,4 +101,6 @@ export {
   ScreenShareIcon,
   StopScreenShareIcon,
   CallDropIcon,
+  CanvasOpenIcon,
+  StopCanvasIcon,
 };

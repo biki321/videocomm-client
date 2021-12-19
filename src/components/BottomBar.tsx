@@ -1,4 +1,5 @@
 import { useVideoConfContext } from "../contexts/video-conf/video-conf-context";
+import { CanvasSharedSts } from "../enums/canvasSharedSts";
 import { ScreenSharedSts } from "../enums/screenSharedSts";
 import {
   CallDropIcon,
@@ -6,9 +7,16 @@ import {
   MicIcon,
   ScreenShareIcon,
   StopScreenShareIcon,
+  StopCanvasIcon,
+  CanvasOpenIcon,
 } from "./IconComps";
 
-export function BottomBar() {
+interface IProps {
+  canvasSts: CanvasSharedSts | null;
+  setCanvasSts: React.Dispatch<React.SetStateAction<CanvasSharedSts | null>>;
+}
+
+export function BottomBar({ canvasSts, setCanvasSts }: IProps) {
   const {
     localMute,
     toggleMicAndVideoDuringMeeting,
@@ -17,6 +25,45 @@ export function BottomBar() {
     screenSharedSts,
     callDrop,
   } = useVideoConfContext();
+
+  const openLocalCanvas = () => setCanvasSts(CanvasSharedSts.LOCAL);
+  const closeLocalCanvas = () => setCanvasSts(null);
+
+  const screenSharingStoppingBtn = () => {
+    if (canvasSts) return null;
+
+    if (screenSharedSts === ScreenSharedSts.LOCAL)
+      return (
+        <div onClick={stopScreenShare}>
+          <StopScreenShareIcon />
+        </div>
+      );
+    else if (screenSharedSts === ScreenSharedSts.REMOTE) return null;
+    else
+      return (
+        <div onClick={shareScreen}>
+          <ScreenShareIcon />
+        </div>
+      );
+  };
+
+  const canvasSharingStoppingBtn = () => {
+    if (screenSharedSts) return null;
+
+    if (canvasSts === CanvasSharedSts.LOCAL)
+      return (
+        <div onClick={closeLocalCanvas}>
+          <StopCanvasIcon />
+        </div>
+      );
+    else if (canvasSts === CanvasSharedSts.REMOTE) return null;
+    else
+      return (
+        <div onClick={openLocalCanvas}>
+          <CanvasOpenIcon />
+        </div>
+      );
+  };
 
   return (
     <div>
@@ -43,15 +90,8 @@ export function BottomBar() {
                 <CameraIcon muted={false} />
               )}
             </div>
-            {screenSharedSts === ScreenSharedSts.LOCAL ? (
-              <div onClick={stopScreenShare}>
-                <StopScreenShareIcon />
-              </div>
-            ) : screenSharedSts === ScreenSharedSts.REMOTE ? null : (
-              <div onClick={shareScreen}>
-                <ScreenShareIcon />
-              </div>
-            )}
+            {screenSharingStoppingBtn()}
+            {canvasSharingStoppingBtn()}
             <div onClick={callDrop}>
               <CallDropIcon />
             </div>
@@ -60,3 +100,13 @@ export function BottomBar() {
     </div>
   );
 }
+
+// {screenSharedSts === ScreenSharedSts.LOCAL ? (
+//   <div onClick={stopScreenShare}>
+//     <StopScreenShareIcon />
+//   </div>
+// ) : screenSharedSts === ScreenSharedSts.REMOTE ? null : (
+//   <div onClick={shareScreen}>
+//     <ScreenShareIcon />
+//   </div>
+// )}

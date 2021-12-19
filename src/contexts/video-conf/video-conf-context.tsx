@@ -15,6 +15,7 @@ import { consumersReducer } from "./consumers-reducer";
 import { ExactTrackKind } from "../../enums/exactTrackKind";
 import { ScreenSharedSts } from "../../enums/screenSharedSts";
 import { useParams } from "react-router";
+import producerParams from "./producerParams";
 
 interface IProps {
   children: JSX.Element;
@@ -42,76 +43,6 @@ interface IContextValue {
 const VideoConfContext = createContext<Partial<IContextValue>>({});
 
 console.log("inside video conf context");
-
-// https://mediasoup.org/documentation/v3/mediasoup-client/api/#ProducerOptions
-// https://mediasoup.org/documentation/v3/mediasoup-client/api/#transport-produce
-let paramsForVideo: types.ProducerOptions = {
-  // mediasoup params
-  encodings: [
-    {
-      rid: "r0",
-      maxBitrate: 100000,
-      scalabilityMode: "S1T3",
-    },
-    {
-      rid: "r1",
-      maxBitrate: 300000,
-      scalabilityMode: "S1T3",
-    },
-    {
-      rid: "r2",
-      maxBitrate: 900000,
-      scalabilityMode: "S1T3",
-    },
-  ],
-  // https://mediasoup.org/documentation/v3/mediasoup-client/api/#ProducerCodecOptions
-  codecOptions: {
-    videoGoogleStartBitrate: 1000,
-  },
-  appData: {
-    exactTrackKind: ExactTrackKind.CAM,
-    paused: false,
-  },
-  zeroRtpOnPause: true,
-};
-
-let paramsForAudio: types.ProducerOptions = {
-  appData: {
-    exactTrackKind: ExactTrackKind.MIC,
-    paused: false,
-  },
-  zeroRtpOnPause: true,
-};
-
-let paramsForScreenShare: types.ProducerOptions = {
-  // mediasoup params
-  encodings: [
-    {
-      rid: "r0",
-      maxBitrate: 100000,
-      scalabilityMode: "S1T3",
-    },
-    {
-      rid: "r1",
-      maxBitrate: 300000,
-      scalabilityMode: "S1T3",
-    },
-    {
-      rid: "r2",
-      maxBitrate: 900000,
-      scalabilityMode: "S1T3",
-    },
-  ],
-  // https://mediasoup.org/documentation/v3/mediasoup-client/api/#ProducerCodecOptions
-  codecOptions: {
-    videoGoogleStartBitrate: 1000,
-  },
-  appData: {
-    exactTrackKind: ExactTrackKind.SCREEEN,
-    paused: false,
-  },
-  zeroRtpOnPause: true,
-};
 
 export function useVideoConfContext() {
   return useContext(VideoConfContext);
@@ -203,13 +134,6 @@ export function VideoConfContextProvider({ children }: IProps) {
       if (isMic)
         setLocalMute((prevState) => ({ ...prevState, mutedMic: false }));
       else setLocalMute((prevState) => ({ ...prevState, mutedVideo: false }));
-
-      // setLocalCamStream((prevState) => {
-      //   console.log("at setLocalCamStream 1st");
-      //   if (prevState) {
-      //     return new MediaStream([...prevState.getTracks(), producer.track!]);
-      //   } else return new MediaStream([producer.track!]);
-      // });
     } else {
       producer.pause();
       producer.appData.paused = producer.paused;
@@ -219,16 +143,6 @@ export function VideoConfContextProvider({ children }: IProps) {
       if (isMic)
         setLocalMute((prevState) => ({ ...prevState, mutedMic: true }));
       else setLocalMute((prevState) => ({ ...prevState, mutedVideo: true }));
-
-      // setLocalCamStream((prevState) => {
-      //   console.log("at setLocalCamStream 2nd");
-      //   if (!prevState) return null;
-      //   const tracks = prevState
-      //     .getTracks()
-      //     .filter((ele) => ele.id !== producer.track!.id);
-      //   if (tracks.length > 0) return new MediaStream(tracks);
-      //   else return null;
-      // });
     }
   };
 
@@ -341,24 +255,27 @@ export function VideoConfContextProvider({ children }: IProps) {
     // to send media to the Router
     // https://mediasoup.org/documentation/v3/mediasoup-client/api/#transport-produce
     // this action will trigger the 'connect' and 'produce' events above
-    paramsForVideo.appData.paused = !paramsForVideo.track?.enabled;
+    producerParams.forVideo.appData.paused =
+      !producerParams.forVideo.track?.enabled;
     producerForVideo.current = await producerTransport.current!.produce(
-      paramsForVideo
+      producerParams.forVideo
     );
 
     setProducerEvents(producerForVideo.current!);
 
-    paramsForAudio.appData.paused = !paramsForAudio.track?.enabled;
+    producerParams.forAudio.appData.paused =
+      !producerParams.forAudio.track?.enabled;
     producerForAudio.current = await producerTransport.current!.produce(
-      paramsForAudio
+      producerParams.forAudio
     );
     setProducerEvents(producerForAudio.current!);
   }, []);
 
   const connectScreenShareSendTransport = useCallback(async () => {
-    paramsForScreenShare.appData.paused = !paramsForScreenShare.track?.enabled;
+    producerParams.forScreenShare.appData.paused =
+      !producerParams.forScreenShare.track?.enabled;
     producerForScreenShare.current = await producerTransport.current!.produce(
-      paramsForScreenShare
+      producerParams.forScreenShare
     );
     setProducerEvents(producerForScreenShare.current!);
   }, []);
@@ -521,20 +438,20 @@ export function VideoConfContextProvider({ children }: IProps) {
     const trackAudio = stream.getAudioTracks()[0];
     const trackVideo = stream.getVideoTracks()[0];
 
-    paramsForVideo = {
+    producerParams.forVideo = {
       track: trackVideo,
-      ...paramsForVideo,
+      ...producerParams.forVideo,
     };
-    paramsForAudio = {
+    producerParams.forAudio = {
       track: trackAudio,
-      ...paramsForAudio,
+      ...producerParams.forAudio,
     };
   }, []);
 
   const shareScreen = async () => {
     const screenStream = await startScreenCapture();
-    paramsForScreenShare = {
-      ...paramsForScreenShare,
+    producerParams.forScreenShare = {
+      ...producerParams.forScreenShare,
       track: screenStream.getVideoTracks()[0],
     };
     setLocalScreenStream(screenStream);
@@ -548,8 +465,8 @@ export function VideoConfContextProvider({ children }: IProps) {
       const producerId = producerForScreenShare.current.id;
       producerForScreenShare.current.close();
       producerForScreenShare.current = null;
-      paramsForScreenShare = {
-        ...paramsForScreenShare,
+      producerParams.forScreenShare = {
+        ...producerParams.forScreenShare,
         track: undefined,
       };
       setLocalScreenStream(null);
