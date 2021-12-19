@@ -11,12 +11,7 @@ import {
   CanvasOpenIcon,
 } from "./IconComps";
 
-interface IProps {
-  canvasSts: CanvasSharedSts | null;
-  setCanvasSts: React.Dispatch<React.SetStateAction<CanvasSharedSts | null>>;
-}
-
-export function BottomBar({ canvasSts, setCanvasSts }: IProps) {
+export function BottomBar() {
   const {
     localMute,
     toggleMicAndVideoDuringMeeting,
@@ -24,13 +19,16 @@ export function BottomBar({ canvasSts, setCanvasSts }: IProps) {
     stopScreenShare,
     screenSharedSts,
     callDrop,
+    canvasSharedSts,
+    setCanvasSharedSts,
   } = useVideoConfContext();
 
-  const openLocalCanvas = () => setCanvasSts(CanvasSharedSts.LOCAL);
-  const closeLocalCanvas = () => setCanvasSts(null);
+  const openLocalCanvas = () =>
+    setCanvasSharedSts && setCanvasSharedSts(CanvasSharedSts.LOCAL);
+  const closeLocalCanvas = () => setCanvasSharedSts && setCanvasSharedSts(null);
 
   const screenSharingStoppingBtn = () => {
-    if (canvasSts) return null;
+    if (canvasSharedSts) return null;
 
     if (screenSharedSts === ScreenSharedSts.LOCAL)
       return (
@@ -50,13 +48,13 @@ export function BottomBar({ canvasSts, setCanvasSts }: IProps) {
   const canvasSharingStoppingBtn = () => {
     if (screenSharedSts) return null;
 
-    if (canvasSts === CanvasSharedSts.LOCAL)
+    if (canvasSharedSts === CanvasSharedSts.LOCAL)
       return (
         <div onClick={closeLocalCanvas}>
           <StopCanvasIcon />
         </div>
       );
-    else if (canvasSts === CanvasSharedSts.REMOTE) return null;
+    else if (canvasSharedSts === CanvasSharedSts.REMOTE) return null;
     else
       return (
         <div onClick={openLocalCanvas}>

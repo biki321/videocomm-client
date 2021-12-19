@@ -16,6 +16,7 @@ import { ExactTrackKind } from "../../enums/exactTrackKind";
 import { ScreenSharedSts } from "../../enums/screenSharedSts";
 import { useParams } from "react-router";
 import producerParams from "./producerParams";
+import { CanvasSharedSts } from "../../enums/canvasSharedSts";
 
 interface IProps {
   children: JSX.Element;
@@ -38,6 +39,10 @@ interface IContextValue {
   callDrop: () => void;
   triggerSetup: () => void;
   screenSharedSts: ScreenSharedSts | null;
+  canvasSharedSts: CanvasSharedSts | null;
+  setCanvasSharedSts: React.Dispatch<
+    React.SetStateAction<CanvasSharedSts | null>
+  >;
 }
 
 const VideoConfContext = createContext<Partial<IContextValue>>({});
@@ -100,7 +105,8 @@ export function VideoConfContextProvider({ children }: IProps) {
   });
   const [screenSharedSts, setScreenSharedSts] =
     useState<ScreenSharedSts | null>(null);
-  // const roomName = "room";
+  const [canvasSharedSts, setCanvasSharedSts] =
+    useState<CanvasSharedSts | null>(null);
   const { roomName } = useParams();
   console.log("room name ", roomName);
 
@@ -476,6 +482,7 @@ export function VideoConfContextProvider({ children }: IProps) {
       setScreenSharedSts(null);
     }
   };
+
   const setProducerEvents = (producer: types.Producer) => {
     producer.on("trackended", () => {
       console.log("track ended");
@@ -526,6 +533,12 @@ export function VideoConfContextProvider({ children }: IProps) {
         await createSendTransport();
         await connectSendTransport();
         getProducers();
+
+        //this is asking if somebody is sharing the canvas
+        socket.emit("isCanvasShared", ({ isShared }: { isShared: boolean }) => {
+          console.log("isCanvasShared", isShared);
+          if (isShared) setCanvasSharedSts(CanvasSharedSts.REMOTE);
+        });
       } catch (error) {
         console.log("error at ", error);
         return;
@@ -626,6 +639,8 @@ export function VideoConfContextProvider({ children }: IProps) {
         callDrop,
         screenSharedSts,
         triggerSetup,
+        canvasSharedSts,
+        setCanvasSharedSts,
       }}
     >
       {children}

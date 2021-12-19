@@ -1,5 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import { useSocketContext } from "../contexts/socket-context";
+import { useVideoConfContext } from "../contexts/video-conf/video-conf-context";
+import { CanvasSharedSts } from "../enums/canvasSharedSts";
 
 interface drawData {
   x0: number;
@@ -15,12 +17,13 @@ const CanvasBoard = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const colorsRef = useRef(null);
   const socket = useSocketContext();
+  const { canvasSharedSts } = useVideoConfContext();
 
   useEffect(() => {
-    socket.emit("sharedCanvas");
-  }, [socket]);
-
-  useEffect(() => {
+    if (canvasSharedSts === CanvasSharedSts.LOCAL) {
+      console.log("sharedCanvas ", canvasSharedSts);
+      socket.emit("sharedCanvas");
+    }
     // --------------- getContext() method returns a drawing context on the canvas-----
 
     const canvas = canvasRef.current;
@@ -159,12 +162,41 @@ const CanvasBoard = () => {
       );
     };
 
+    if (canvasSharedSts === CanvasSharedSts.REMOTE) {
+      console.log("canvasboard effect receive getIntialCanvasImage");
+      socket.emit("getIntialCanvasImage", (imageData: string) => {
+        //draw the image on canvas
+        const image = new Image();
+        image.onload = () => {
+          context.drawImage(image, 0, 0);
+        };
+        image.src = imageData;
+      });
+    }
     socket.on("drawing", onDrawingEvent);
 
     return () => {
       socket.off("drawing", onDrawingEvent);
     };
-  }, [socket]);
+  }, [canvasSharedSts, socket]);
+
+  useEffect(() => {
+    console.log("canvasboard effect emit getIntialCanvasImage");
+    socket.on("getIntialCanvasImage", (callback) => {
+      console.log("getIntialCanvasImage from canvas");
+      const base64ImageData = canvasRef.current!.toDataURL("image/png");
+      callback({ imageData: base64ImageData });
+    });
+
+    return () => {
+      socket.off("getIntialCanvasImage");
+
+      //when comp is unmounted inform other peer to remove the canvas
+      //if this peer is host of the canvas
+      if (canvasSharedSts === CanvasSharedSts.LOCAL)
+        socket.emit("closeSharedCanvas");
+    };
+  }, [canvasSharedSts, socket]);
 
   // ----------- limit the number of events per second -----------------------
 
@@ -185,7 +217,6 @@ const CanvasBoard = () => {
   return (
     <div>
       <canvas ref={canvasRef} className="whiteboard bg-white" />
-
       {/* <div ref={colorsRef} className="colors">
         <div className="color black" />
         <div className="color red" />

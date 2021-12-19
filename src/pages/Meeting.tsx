@@ -37,25 +37,32 @@ export function VideoWrapper({
 
 export default function Meeting() {
   const socket = useSocketContext();
-  const { localCamStream, localScreenStream, consumers } =
-    useVideoConfContext();
+  const {
+    localCamStream,
+    localScreenStream,
+    consumers,
+    canvasSharedSts,
+    setCanvasSharedSts,
+  } = useVideoConfContext();
   const [ready, setReady] = useState(false);
-  const [canvasSts, setCanvasSts] = useState<CanvasSharedSts | null>(null);
 
   useEffect(() => {
+    if (canvasSharedSts === undefined || !setCanvasSharedSts) return;
+
+    // during meeting if somebody share a canvas
     socket.on("sharedCanvas", () => {
       console.log("effect meeting sharedCanvas");
-      setCanvasSts(CanvasSharedSts.REMOTE);
+      setCanvasSharedSts(CanvasSharedSts.REMOTE);
     });
     socket.on("closeSharedCanvas", () => {
-      setCanvasSts(null);
+      setCanvasSharedSts(null);
     });
 
     return () => {
       socket.off("sharedCanvas");
       socket.off("closeSharedCanvas");
     };
-  }, [socket]);
+  }, [canvasSharedSts, setCanvasSharedSts, socket]);
 
   //this is either local screen share or remote share, but only one
   const screenMediaEle = localScreenStream ? (
@@ -74,7 +81,7 @@ export default function Meeting() {
         }`}
       >
         <div className={`my-2 ${screenMediaEle ? "xl:flex-1" : ""}`}>
-          {!canvasSts ? screenMediaEle : <CanvasBoard />}
+          {!canvasSharedSts ? screenMediaEle : <CanvasBoard />}
         </div>
         <div
           className={`space-y-2 flex flex-col items-center ${
@@ -108,7 +115,7 @@ export default function Meeting() {
       </div>
 
       <div className="py-3">
-        <BottomBar canvasSts={canvasSts} setCanvasSts={setCanvasSts} />
+        <BottomBar />
       </div>
     </div>
   ) : (
