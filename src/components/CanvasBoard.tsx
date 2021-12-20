@@ -21,6 +21,7 @@ const onColorUpdate = (color: string) => {
 const CanvasBoard = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const canvasParentRef = useRef<HTMLDivElement | null>(null);
   const socket = useSocketContext();
   const { canvasSharedSts } = useVideoConfContext();
 
@@ -30,9 +31,12 @@ const CanvasBoard = () => {
       socket.emit("sharedCanvas");
     }
     // --------------- getContext() method returns a drawing context on the canvas-----
-
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const domRect = canvasParentRef.current!.getBoundingClientRect();
+    canvas.width = domRect.width;
+    canvas.height = domRect.height;
+
     contextRef.current = canvas.getContext("2d");
     if (!contextRef.current) return;
     const canvasOffSet = {
@@ -43,7 +47,6 @@ const CanvasBoard = () => {
     let drawing = false;
 
     // ------------------------------- create the drawing ----------------------------
-
     const drawLine = (data: drawData, emit: boolean) => {
       contextRef.current!.beginPath();
       contextRef.current!.moveTo(data.x0, data.y0);
@@ -69,7 +72,6 @@ const CanvasBoard = () => {
     };
 
     // ---------------- mouse movement --------------------------------------
-
     const onMouseDown = (e: MouseEvent) => {
       drawing = true;
       current.x = e.clientX - canvasOffSet.left;
@@ -77,6 +79,7 @@ const CanvasBoard = () => {
     };
 
     const onMouseMove = (e: MouseEvent) => {
+      console.log("mouse move");
       if (!drawing) {
         return;
       }
@@ -112,27 +115,10 @@ const CanvasBoard = () => {
     };
 
     // -----------------add event listeners to our canvas ----------------------
-
     canvas.addEventListener("mousedown", onMouseDown, false);
     canvas.addEventListener("mouseup", onMouseUp, false);
     canvas.addEventListener("mouseout", onMouseUp, false);
     canvas.addEventListener("mousemove", throttle(onMouseMove, 10), false);
-
-    // Touch support for mobile devices
-    // canvas.addEventListener("touchstart", onMouseDown, false);
-    // canvas.addEventListener("touchend", onMouseUp, false);
-    // canvas.addEventListener("touchcancel", onMouseUp, false);
-    // canvas.addEventListener("touchmove", throttle(onMouseMove, 10), false);
-
-    // -------------- make the canvas fill its parent component -----------------
-
-    // const onResize = () => {
-    //   canvas.width = window.innerWidth;
-    //   canvas.height = window.innerHeight;
-    // };
-
-    // window.addEventListener("resize", onResize, false);
-    // onResize();
 
     // ----------------------- socket.io connection ----------------------------
     const onDrawingEvent = (data: drawData) => {
@@ -163,30 +149,48 @@ const CanvasBoard = () => {
     }
     socket.on("drawing", onDrawingEvent);
 
-    return () => {
-      socket.off("drawing", onDrawingEvent);
-    };
-  }, [canvasSharedSts, socket]);
-
-  useEffect(() => {
-    console.log("canvasboard effect emit getIntialCanvasImage");
     socket.on("getIntialCanvasImage", (callback) => {
       const base64ImageData = canvasRef.current!.toDataURL("image/png");
       callback({ imageData: base64ImageData });
     });
 
-    return () => {
-      socket.off("getIntialCanvasImage");
+    const onResize = () => {
+      const prevBase64ImageData = canvasRef.current!.toDataURL("image/png");
 
+      const domRect = canvasParentRef.current!.getBoundingClientRect();
+      canvasRef.current!.width = domRect.width;
+      canvasRef.current!.height = domRect.height;
+      canvasOffSet.left = canvas.offsetLeft;
+      canvasOffSet.top = canvas.offsetTop;
+
+      const image = new Image();
+      image.onload = () => {
+        contextRef.current!.drawImage(
+          image,
+          0,
+          0,
+          domRect.width,
+          domRect.height
+        );
+      };
+      image.src = prevBase64ImageData;
+    };
+
+    window.addEventListener("resize", onResize, false);
+
+    return () => {
+      socket.off("drawing", onDrawingEvent);
+      socket.off("getIntialCanvasImage");
       //when comp is unmounted inform other peer to remove the canvas
       //if this peer is host of the canvas
       if (canvasSharedSts === CanvasSharedSts.LOCAL)
         socket.emit("closeSharedCanvas");
+
+      window.removeEventListener("resize", onResize);
     };
   }, [canvasSharedSts, socket]);
 
   // ----------- limit the number of events per second -----------------------
-
   const throttle = (callback: any, delay: number) => {
     let previousCall = new Date().getTime();
     return function () {
@@ -199,35 +203,27 @@ const CanvasBoard = () => {
     };
   };
 
-  const increaseSize = (width: number, height: number) => {
-    const prevBase64ImageData = canvasRef.current!.toDataURL("image/png");
-    canvasRef.current!.width = width;
-    canvasRef.current!.height = height;
-    const image = new Image();
-    image.onload = () => {
-      contextRef.current!.drawImage(image, 0, 0);
-    };
-    image.src = prevBase64ImageData;
-  };
-
   return (
-    <div className="">
+    <div
+      className="w-full aspect-w-4 aspect-h-2 relative"
+      ref={canvasParentRef}
+    >
       <canvas ref={canvasRef} className="whiteboard bg-white" />
-      <div className="colors flex space-x-1 mx-auto">
+      <div className="flex absolute top-0 right-4 z-10 h-6">
         <div
-          className={`w-5 h-5 bg-black cursor-pointer`}
+          className={`w-6 h-6 bg-black cursor-pointer`}
           onClick={() => onColorUpdate("black")}
         ></div>
         <div
-          className={`w-5 h-5 bg-red-900 cursor-pointer`}
+          className={`w-6 h-6 bg-red-900 cursor-pointer`}
           onClick={() => onColorUpdate("red")}
         ></div>
         <div
-          className={`w-5 h-5 bg-yellow-300 cursor-pointer`}
+          className={`w-6 h-6 bg-yellow-300 cursor-pointer`}
           onClick={() => onColorUpdate("yellow")}
         ></div>
         <div
-          className={`w-5 h-5 bg-blue-700 cursor-pointer`}
+          className={`w-6 h-6 bg-blue-700 cursor-pointer`}
           onClick={() => onColorUpdate("blue")}
         ></div>
       </div>
@@ -238,3 +234,9 @@ const CanvasBoard = () => {
 export default CanvasBoard;
 
 // pen like (apple pencil) to write is not supported yet
+
+// Touch support for mobile devices
+// canvas.addEventListener("touchstart", onMouseDown, false);
+// canvas.addEventListener("touchend", onMouseUp, false);
+// canvas.addEventListener("touchcancel", onMouseUp, false);
+// canvas.addEventListener("touchmove", throttle(onMouseMove, 10), false);

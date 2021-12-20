@@ -15,7 +15,7 @@ export default function PeerVideo({ stream, local }: IProps) {
       console.log("effect at peervideo", local, stream?.getTracks());
       videoRef.current.srcObject = stream;
     }
-  }, [local, stream]);
+  });
 
   let videoMuted;
   let micMuted;
@@ -44,9 +44,9 @@ export default function PeerVideo({ stream, local }: IProps) {
             <h1 className="font-bold text-xl text-white">Biki Deka</h1>
           </div>
         ) : null}
-        {showVideoEle ? (
-          <video className="rounded-md" ref={videoRef} autoPlay></video>
-        ) : null}
+        {/* {showVideoEle ? ( */}
+        <video className="rounded-md" ref={videoRef} autoPlay></video>
+        {/* ) : null} */}
         <div className="z-10">
           <h3 className="font-medium text-white absolute left-2 bottom-1">
             Biki Deka

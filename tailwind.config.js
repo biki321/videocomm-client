@@ -7,6 +7,11 @@ module.exports = {
       aspectRatio: {
         '4/3': '4 / 3',
       },
+      flex: {
+        '3': '3 1 0%',
+        '4': '4 1 0%',
+        '10': '10 1 0%',
+      }
     },
   },
   variants: {

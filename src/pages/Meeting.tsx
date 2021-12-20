@@ -88,25 +88,17 @@ export default function Meeting() {
   return ready ? (
     <div className="h-screen w-screen">
       <div
-        className={`p-3 overflow-y-auto ${
-          screenOrCanvas ? "xl:flex xl:overflow-y-hidden" : ""
-        }`}
+        className={`p-3 ${screenOrCanvas ? "xl:flex xl:justify-between" : ""}`}
       >
         {screenOrCanvas === screenOrCanvasEnum.SCREEN ? (
-          <div className={`my-2 ${screenOrCanvas ? "xl:flex-1" : ""}`}>
-            {screenMediaEle}
-          </div>
+          <div className="flex justify-center flex-4">{screenMediaEle}</div>
         ) : screenOrCanvas === screenOrCanvasEnum.CANVAS ? (
-          <div className={`my-2 ${canvasSharedSts ? "xl:flex-1" : ""}`}>
-            {<CanvasBoard />}
-          </div>
+          <div className="flex justify-center flex-4 ">{<CanvasBoard />}</div>
         ) : null}
 
         <div
-          className={`space-y-2 flex flex-col items-center ${
-            screenOrCanvas
-              ? "xl:overflow-y-auto block flex-1"
-              : "xl:flex-row justify-center items-center space-x-2 flex-wrap"
+          className={`space-y-2 flex flex-col items-center overflow-y-auto ${
+            screenOrCanvas ? "xl:flex-1" : "flex-row flex-wrap"
           }`}
         >
           {localCamStream !== undefined ? (
@@ -133,7 +125,7 @@ export default function Meeting() {
         </div>
       </div>
 
-      <div className="py-3 absolute bottom-0 left-0 right-0">
+      <div className="py-3 sticky bottom-0 left-0 right-0 z-10">
         <BottomBar />
       </div>
     </div>

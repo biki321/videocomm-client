@@ -11,7 +11,7 @@ export default function ScreenSharing({ stream, local }: IProps) {
 
   useEffect(() => {
     videoRef.current!.srcObject = stream;
-  }, [local, stream]);
+  });
 
   return (
     <>
