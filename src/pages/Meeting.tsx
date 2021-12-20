@@ -35,6 +35,11 @@ export function VideoWrapper({
   return <div className={className}>{children}</div>;
 }
 
+enum screenOrCanvasEnum {
+  SCREEN = "screen",
+  CANVAS = "canvas",
+}
+
 export default function Meeting() {
   const socket = useSocketContext();
   const {
@@ -64,35 +69,49 @@ export default function Meeting() {
     };
   }, [canvasSharedSts, setCanvasSharedSts, socket]);
 
-  //this is either local screen share or remote share, but only one
-  const screenMediaEle = localScreenStream ? (
-    <VideoWrapper maxW="max-w-6xl w-full">
-      <ScreenSharing stream={localScreenStream} local={true} />
-    </VideoWrapper>
-  ) : (
-    showScreenShare(consumers)
-  );
+  let screenMediaEle: JSX.Element | null = null;
+  let screenOrCanvas: "screen" | "canvas" | null = null;
+
+  if (!canvasSharedSts) {
+    //this is either local screen share or remote share, but only one
+    if (localScreenStream) {
+      screenMediaEle = (
+        <VideoWrapper maxW="max-w-6xl w-full">
+          <ScreenSharing stream={localScreenStream} local={true} />
+        </VideoWrapper>
+      );
+    } else screenMediaEle = showScreenShare(consumers);
+
+    screenOrCanvas = screenMediaEle ? screenOrCanvasEnum.SCREEN : null;
+  } else screenOrCanvas = screenOrCanvasEnum.CANVAS;
 
   return ready ? (
-    <div className="h-screen w-screen flex flex-col">
+    <div className="h-screen w-screen">
       <div
-        className={`p-3 flex-1 overflow-y-auto ${
-          screenMediaEle ? "xl:flex xl:overflow-y-hidden" : ""
+        className={`p-3 overflow-y-auto ${
+          screenOrCanvas ? "xl:flex xl:overflow-y-hidden" : ""
         }`}
       >
-        <div className={`my-2 ${screenMediaEle ? "xl:flex-1" : ""}`}>
-          {!canvasSharedSts ? screenMediaEle : <CanvasBoard />}
-        </div>
+        {screenOrCanvas === screenOrCanvasEnum.SCREEN ? (
+          <div className={`my-2 ${screenOrCanvas ? "xl:flex-1" : ""}`}>
+            {screenMediaEle}
+          </div>
+        ) : screenOrCanvas === screenOrCanvasEnum.CANVAS ? (
+          <div className={`my-2 ${canvasSharedSts ? "xl:flex-1" : ""}`}>
+            {<CanvasBoard />}
+          </div>
+        ) : null}
+
         <div
           className={`space-y-2 flex flex-col items-center ${
-            screenMediaEle
+            screenOrCanvas
               ? "xl:overflow-y-auto block flex-1"
               : "xl:flex-row justify-center items-center space-x-2 flex-wrap"
           }`}
         >
           {localCamStream !== undefined ? (
             <VideoWrapper
-              maxW={screenMediaEle ? "max-w-md xl:max-w-xs w-full" : undefined}
+              maxW={screenOrCanvas ? "max-w-md xl:max-w-xs w-full" : undefined}
               key={localCamStream?.id}
             >
               <PeerVideo stream={localCamStream} local={true} />
@@ -103,7 +122,7 @@ export default function Meeting() {
             return (
               <VideoWrapper
                 maxW={
-                  screenMediaEle ? "max-w-md xl:max-w-xs w-full" : undefined
+                  screenOrCanvas ? "max-w-md xl:max-w-xs w-full" : undefined
                 }
                 key={peerMedia.webCamStream ? peerMedia.webCamStream.id : index}
               >
@@ -114,7 +133,7 @@ export default function Meeting() {
         </div>
       </div>
 
-      <div className="py-3">
+      <div className="py-3 absolute bottom-0 left-0 right-0">
         <BottomBar />
       </div>
     </div>
@@ -122,8 +141,3 @@ export default function Meeting() {
     <Permission setReady={setReady} />
   );
 }
-
-// a note
-// 'return ready ? <Final /> : <Permission />' causes video element's glitch
-// whenever meeting is rerenderd but not with current setup
-// don't exactly know why yet.

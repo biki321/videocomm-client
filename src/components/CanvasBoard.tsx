@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useSocketContext } from "../contexts/socket-context";
 import { useVideoConfContext } from "../contexts/video-conf/video-conf-context";
 import { CanvasSharedSts } from "../enums/canvasSharedSts";
@@ -13,9 +13,14 @@ interface drawData {
 
 const current = { color: "black", x: 0, y: 0 };
 
+// helper that will update the current color
+const onColorUpdate = (color: string) => {
+  current.color = color;
+};
+
 const CanvasBoard = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const colorsRef = useRef(null);
+  const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const socket = useSocketContext();
   const { canvasSharedSts } = useVideoConfContext();
 
@@ -28,41 +33,25 @@ const CanvasBoard = () => {
 
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const test = colorsRef.current;
-    const context = canvas.getContext("2d");
-    if (!context) return;
+    contextRef.current = canvas.getContext("2d");
+    if (!contextRef.current) return;
     const canvasOffSet = {
       left: canvas.offsetLeft,
       top: canvas.offsetTop,
     };
 
-    // ----------------------- Colors --------------------------------------------------
-
-    const colors = document.getElementsByClassName("color");
-    console.log(colors, "the colors");
-    console.log(test);
-
-    // helper that will update the current color
-    const onColorUpdate = (e: any) => {
-      current.color = e.target.className.split(" ")[1];
-    };
-
-    // loop through the color elements and add the click event listeners
-    for (let i = 0; i < colors.length; i++) {
-      colors[i].addEventListener("click", onColorUpdate, false);
-    }
     let drawing = false;
 
     // ------------------------------- create the drawing ----------------------------
 
     const drawLine = (data: drawData, emit: boolean) => {
-      context.beginPath();
-      context.moveTo(data.x0, data.y0);
-      context.lineTo(data.x1, data.y1);
-      context.strokeStyle = data.color;
-      context.lineWidth = 2;
-      context.stroke();
-      context.closePath();
+      contextRef.current!.beginPath();
+      contextRef.current!.moveTo(data.x0, data.y0);
+      contextRef.current!.lineTo(data.x1, data.y1);
+      contextRef.current!.strokeStyle = data.color;
+      contextRef.current!.lineWidth = 2;
+      contextRef.current!.stroke();
+      contextRef.current!.closePath();
 
       if (!emit) {
         return;
@@ -83,8 +72,8 @@ const CanvasBoard = () => {
 
     const onMouseDown = (e: MouseEvent) => {
       drawing = true;
-      current.x = e.pageX - canvasOffSet.left;
-      current.y = e.pageY - canvasOffSet.top;
+      current.x = e.clientX - canvasOffSet.left;
+      current.y = e.clientY - canvasOffSet.top;
     };
 
     const onMouseMove = (e: MouseEvent) => {
@@ -95,14 +84,14 @@ const CanvasBoard = () => {
         {
           x0: current.x,
           y0: current.y,
-          x1: e.pageX - canvasOffSet.left,
-          y1: e.pageY - canvasOffSet.top,
+          x1: e.clientX - canvasOffSet.left,
+          y1: e.clientY - canvasOffSet.top,
           color: current.color,
         },
         true
       );
-      current.x = e.pageX - canvasOffSet.left;
-      current.y = e.pageY - canvasOffSet.top;
+      current.x = e.clientX - canvasOffSet.left;
+      current.y = e.clientY - canvasOffSet.top;
     };
 
     const onMouseUp = (e: MouseEvent) => {
@@ -114,8 +103,8 @@ const CanvasBoard = () => {
         {
           x0: current.x,
           y0: current.y,
-          x1: e.pageX - canvasOffSet.left,
-          y1: e.pageY - canvasOffSet.top,
+          x1: e.clientX - canvasOffSet.left,
+          y1: e.clientY - canvasOffSet.top,
           color: current.color,
         },
         true
@@ -157,7 +146,6 @@ const CanvasBoard = () => {
           y1: data.y1 * h,
           color: data.color,
         },
-        //it was undefined before need to check
         false
       );
     };
@@ -168,7 +156,7 @@ const CanvasBoard = () => {
         //draw the image on canvas
         const image = new Image();
         image.onload = () => {
-          context.drawImage(image, 0, 0);
+          contextRef.current!.drawImage(image, 0, 0);
         };
         image.src = imageData;
       });
@@ -183,7 +171,6 @@ const CanvasBoard = () => {
   useEffect(() => {
     console.log("canvasboard effect emit getIntialCanvasImage");
     socket.on("getIntialCanvasImage", (callback) => {
-      console.log("getIntialCanvasImage from canvas");
       const base64ImageData = canvasRef.current!.toDataURL("image/png");
       callback({ imageData: base64ImageData });
     });
@@ -212,20 +199,42 @@ const CanvasBoard = () => {
     };
   };
 
-  // ------------- The Canvas and color elements --------------------------
+  const increaseSize = (width: number, height: number) => {
+    const prevBase64ImageData = canvasRef.current!.toDataURL("image/png");
+    canvasRef.current!.width = width;
+    canvasRef.current!.height = height;
+    const image = new Image();
+    image.onload = () => {
+      contextRef.current!.drawImage(image, 0, 0);
+    };
+    image.src = prevBase64ImageData;
+  };
 
   return (
-    <div>
+    <div className="">
       <canvas ref={canvasRef} className="whiteboard bg-white" />
-      {/* <div ref={colorsRef} className="colors">
-        <div className="color black" />
-        <div className="color red" />
-        <div className="color green" />
-        <div className="color blue" />
-        <div className="color yellow" />
-      </div> */}
+      <div className="colors flex space-x-1 mx-auto">
+        <div
+          className={`w-5 h-5 bg-black cursor-pointer`}
+          onClick={() => onColorUpdate("black")}
+        ></div>
+        <div
+          className={`w-5 h-5 bg-red-900 cursor-pointer`}
+          onClick={() => onColorUpdate("red")}
+        ></div>
+        <div
+          className={`w-5 h-5 bg-yellow-300 cursor-pointer`}
+          onClick={() => onColorUpdate("yellow")}
+        ></div>
+        <div
+          className={`w-5 h-5 bg-blue-700 cursor-pointer`}
+          onClick={() => onColorUpdate("blue")}
+        ></div>
+      </div>
     </div>
   );
 };
 
 export default CanvasBoard;
+
+// pen like (apple pencil) to write is not supported yet
