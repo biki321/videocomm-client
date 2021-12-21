@@ -503,9 +503,7 @@ export function VideoConfContextProvider({ children }: IProps) {
     producerTransport.current?.close();
     consumerTransport.current?.close();
 
-    socket?.emit("calldrop", ({ ok }: { ok: boolean }) => {
-      console.log("dropped", ok);
-    });
+    socket?.emit("calldrop");
     consumersDispatch({
       type: "CONSUMERS_CLEAN",
     });

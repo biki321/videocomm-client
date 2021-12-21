@@ -15,7 +15,7 @@ export default function ScreenSharing({ stream, local }: IProps) {
 
   return (
     <>
-      <div className="relative w-full aspect-w-4 aspect-h-3">
+      <div className="relative w-full ">
         <video className="rounded-md" ref={videoRef} autoPlay></video>
       </div>
     </>

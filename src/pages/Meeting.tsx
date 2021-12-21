@@ -76,7 +76,7 @@ export default function Meeting() {
     //this is either local screen share or remote share, but only one
     if (localScreenStream) {
       screenMediaEle = (
-        <VideoWrapper maxW="max-w-6xl w-full">
+        <VideoWrapper maxW="w-full">
           <ScreenSharing stream={localScreenStream} local={true} />
         </VideoWrapper>
       );
@@ -88,17 +88,25 @@ export default function Meeting() {
   return ready ? (
     <div className="h-screen w-screen">
       <div
-        className={`p-3 ${screenOrCanvas ? "xl:flex xl:justify-between" : ""}`}
+        className={`p-3 h-92/100 ${
+          screenOrCanvas ? "xl:flex xl:justify-between" : ""
+        }`}
       >
         {screenOrCanvas === screenOrCanvasEnum.SCREEN ? (
-          <div className="flex justify-center flex-4">{screenMediaEle}</div>
+          <div className="flex justify-center flex-4 h-2/5 xl:h-full">
+            {screenMediaEle}
+          </div>
         ) : screenOrCanvas === screenOrCanvasEnum.CANVAS ? (
-          <div className="flex justify-center flex-4 ">{<CanvasBoard />}</div>
+          <div className="flex justify-center flex-4 h-2/5 xl:h-full">
+            {<CanvasBoard />}
+          </div>
         ) : null}
 
         <div
-          className={`space-y-2 flex flex-col items-center overflow-y-auto ${
-            screenOrCanvas ? "xl:flex-1" : "flex-row flex-wrap"
+          className={`space-y-2 flex flex-col items-center overflow-y-auto overflow-x-hidden ml-2 ${
+            screenOrCanvas
+              ? "xl:flex-1 h-3/5 xl:h-full"
+              : "space-x-2 xl:flex-row xl:justify-center xl:flex-wrap h-full"
           }`}
         >
           {localCamStream !== undefined ? (
@@ -125,7 +133,7 @@ export default function Meeting() {
         </div>
       </div>
 
-      <div className="py-3 sticky bottom-0 left-0 right-0 z-10">
+      <div className="py-2 z-10">
         <BottomBar />
       </div>
     </div>
@@ -133,3 +141,16 @@ export default function Meeting() {
     <Permission setReady={setReady} />
   );
 }
+
+// {[1, 2, 3, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((ele) =>
+//   localCamStream !== undefined ? (
+//     <VideoWrapper
+//       maxW={
+//         screenOrCanvas ? "max-w-md xl:max-w-xs w-full" : undefined
+//       }
+//       key={ele}
+//     >
+//       <PeerVideo stream={localCamStream} local={true} />
+//     </VideoWrapper>
+//   ) : null
+// )}

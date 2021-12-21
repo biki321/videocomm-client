@@ -1,6 +1,7 @@
 import { useVideoConfContext } from "../contexts/video-conf/video-conf-context";
 import { CanvasSharedSts } from "../enums/canvasSharedSts";
 import { ScreenSharedSts } from "../enums/screenSharedSts";
+import { useNavigate } from "react-router-dom";
 import {
   CallDropIcon,
   CameraIcon,
@@ -22,6 +23,7 @@ export function BottomBar() {
     canvasSharedSts,
     setCanvasSharedSts,
   } = useVideoConfContext();
+  let navigate = useNavigate();
 
   const openLocalCanvas = () =>
     setCanvasSharedSts && setCanvasSharedSts(CanvasSharedSts.LOCAL);
@@ -63,6 +65,12 @@ export function BottomBar() {
       );
   };
 
+  const callDropHandle = () => {
+    if (!callDrop) return;
+    callDrop();
+    navigate("/left", { replace: true });
+  };
+
   return (
     <div>
       {localMute &&
@@ -90,7 +98,7 @@ export function BottomBar() {
             </div>
             {screenSharingStoppingBtn()}
             {canvasSharingStoppingBtn()}
-            <div onClick={callDrop}>
+            <div onClick={callDropHandle}>
               <CallDropIcon />
             </div>
           </div>
@@ -98,13 +106,3 @@ export function BottomBar() {
     </div>
   );
 }
-
-// {screenSharedSts === ScreenSharedSts.LOCAL ? (
-//   <div onClick={stopScreenShare}>
-//     <StopScreenShareIcon />
-//   </div>
-// ) : screenSharedSts === ScreenSharedSts.REMOTE ? null : (
-//   <div onClick={shareScreen}>
-//     <ScreenShareIcon />
-//   </div>
-// )}
