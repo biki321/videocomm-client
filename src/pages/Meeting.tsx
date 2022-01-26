@@ -8,6 +8,7 @@ import { useSocketContext } from "../contexts/socket-context";
 import { useVideoConfContext } from "../contexts/video-conf/video-conf-context";
 import { CanvasSharedSts } from "../enums/canvasSharedSts";
 import { IPeerMedia } from "../interfaces/peermedia.interface";
+import { useParams } from "react-router-dom";
 
 function showScreenShare(consumers: IPeerMedia[] | undefined) {
   const peerMedia = consumers?.find((consumer) => consumer.screenShareStream);
@@ -50,6 +51,7 @@ export default function Meeting() {
     setCanvasSharedSts,
   } = useVideoConfContext();
   const [ready, setReady] = useState(false);
+  const { roomName } = useParams();
 
   useEffect(() => {
     if (canvasSharedSts === undefined || !setCanvasSharedSts) return;
@@ -86,7 +88,7 @@ export default function Meeting() {
   } else screenOrCanvas = screenOrCanvasEnum.CANVAS;
 
   return ready ? (
-    <div className="h-screen w-screen">
+    <div className="bg-gray-900 h-screen w-screen">
       <div
         className={`p-3 h-92/100 ${
           screenOrCanvas ? "xl:flex xl:justify-between" : ""
@@ -138,7 +140,7 @@ export default function Meeting() {
       </div>
     </div>
   ) : (
-    <Permission setReady={setReady} />
+    <Permission setReady={setReady} roomName={roomName!} />
   );
 }
 

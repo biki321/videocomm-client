@@ -5,7 +5,9 @@ interface IProps {
   children: JSX.Element;
 }
 
-const socket = io("http://localhost:3000");
+const socket = io(process.env.REACT_APP_MEDIA_SERVER_URL!, {
+  withCredentials: false,
+});
 const SocketContext = createContext(socket);
 
 console.log("inside socket context");

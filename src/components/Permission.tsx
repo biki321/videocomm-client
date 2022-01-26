@@ -5,9 +5,10 @@ import { VideoWrapper } from "../pages/Meeting";
 
 interface IProps {
   setReady: React.Dispatch<React.SetStateAction<boolean>>;
+  roomName: string;
 }
 
-export default function Permission({ setReady }: IProps) {
+export default function Permission({ setReady, roomName }: IProps) {
   const { localCamStream, triggerSetup, toggleMicAndVideo, localMute } =
     useVideoConfContext();
 
@@ -19,7 +20,7 @@ export default function Permission({ setReady }: IProps) {
   };
 
   return localCamStream ? (
-    <div className="h-screen w-screen flex flex-col xl:flex-row justify-center items-center">
+    <div className=" bg-gray-900 h-screen w-screen flex flex-col xl:flex-row justify-center items-center">
       <div className="relative max-w-md">
         {localCamStream !== undefined ? (
           <VideoWrapper>

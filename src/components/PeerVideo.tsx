@@ -49,7 +49,7 @@ export default function PeerVideo({ stream, local }: IProps) {
         {/* ) : null} */}
         <div className="z-10">
           <h3 className="font-medium text-white absolute left-2 bottom-1">
-            Biki Deka
+            username
           </h3>
           {micMuted ? (
             <div className="absolute right-2 bottom-1">
