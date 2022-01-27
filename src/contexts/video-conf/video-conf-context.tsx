@@ -645,3 +645,6 @@ export function VideoConfContextProvider({ children }: IProps) {
     </VideoConfContext.Provider>
   );
 }
+
+//if meeting is ended by clicking end button then server will need a restart.
+// that is a bug
