@@ -527,10 +527,11 @@ export function VideoConfContextProvider({ children }: IProps) {
         device.current = await createDevice();
 
         // once the device loads, create transport
-        await createRecvTransport();
-        await createSendTransport();
-        await connectSendTransport();
-        getProducers();
+        await createRecvTransport(); // webrtc receive connection between server and device
+        await createSendTransport(); // webrtc send connection between server and device
+        await connectSendTransport(); // to connect send transport and local media stream
+        getProducers(); // request to get other peers media from server
+        //producer represents a media stream
 
         //this is asking if somebody is sharing the canvas
         socket.emit("isCanvasShared", ({ isShared }: { isShared: boolean }) => {
