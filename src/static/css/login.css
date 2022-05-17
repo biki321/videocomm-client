@@ -1,0 +1,65 @@
+.login-page-div {
+  width: 300px;
+  max-width: 360px;
+  display: block;
+}
+
+.login-page-div .login-name {
+  text-align: center;
+  font-size: 30px;
+  font-weight: 600;
+}
+
+.login-page-div #useremail,
+#password,
+.login-btn {
+  width: 99%;
+  height: 35px;
+  border-radius: 7px;
+}
+
+.login-page-div .login-error {
+  color: red;
+  font-size: 13px;
+}
+
+.login-page-div #useremail,
+#password {
+  display: block;
+  border: 1.4px solid #d6d5da;
+  margin: 8px 0px;
+  padding: 3px 10px;
+}
+
+.login-page-div #useremail {
+  margin-bottom: 18px;
+}
+
+.login-page-div label {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333c45;
+}
+
+.login-page-div .login-btn {
+  margin-top: 20px;
+  color: white;
+  background-color: #09843c;
+  outline: none;
+  border: none;
+  font-size: 18px;
+}
+
+.login-page-div input:focus {
+  outline-color: #4769b3;
+  /* color: black; */
+}
+
+.login-page-div input::placeholder {
+  font-weight: 500;
+  color: #929ca6;
+}
+
+.login-page-div .disabled-btn {
+  background-color: #11b555;
+}

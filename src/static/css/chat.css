@@ -1,0 +1,99 @@
+.container-chat {
+  /* background: #edf0f6; */
+  width: 27%;
+  max-width: 600px;
+  border-right: 2px solid #e4e6eb;
+  border-left: 2px solid #e4e6eb;
+}
+.chat {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.chat .error,
+.text-error {
+  color: red;
+  margin-left: 20px;
+}
+
+.chat-box {
+  padding: 10px 10px;
+  overflow-y: auto;
+  flex: 1;
+  margin: 10px 10px;
+  /* overscroll-behavior-y: contain;
+  scroll-snap-type: y proximity; */
+  display: flex;
+  /* to keep chat-div(messages container) scrolled to bottom*/
+  flex-direction: column-reverse;
+}
+
+.chat-box .load-btn {
+  border: 1px solid #8a8c98;
+  border-radius: 5px;
+  margin: 15px auto;
+  padding: 3px 8px;
+  display: block;
+}
+
+.chat-box .oneday-msgs {
+  font-size: 12px;
+  display: block;
+  margin: 15px 0px;
+  text-align: center;
+}
+
+*::-webkit-scrollbar {
+  width: 5px;
+}
+*::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+*::-webkit-scrollbar-thumb {
+  background: #aaa;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.chat-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  bottom: 8px;
+  cursor: pointer;
+}
+
+textarea {
+  outline: none;
+  resize: none;
+  display: block;
+  width: 100%;
+  border: 0px;
+  border-radius: 30px;
+  margin: 5px 5px;
+  padding: 13px 60px 0px 20px;
+  font-size: 16px;
+  min-height: 40px;
+  max-height: 100px;
+  line-height: 20px;
+  background-color: #f3f3f5;
+  /* box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2); */
+}
+
+textarea::placeholder {
+  color: grey;
+}
+
+textarea::-webkit-scrollbar {
+  width: 2px;
+}
+
+.chat-footer .message-send-btn {
+  color: #00a48a;
+  font-size: 35px;
+  margin-right: 20px;
+  cursor: pointer;
+}

@@ -1,0 +1,92 @@
+.wrapper-div {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: auto;
+}
+
+.signup-page-div {
+  width: 300px;
+  max-width: 360px;
+  display: block;
+}
+
+.signup-page-div .signup-name {
+  text-align: center;
+  font-size: 30px;
+  font-weight: 600;
+}
+
+.signup-page-div #useremail,
+#password,
+.signup-btn {
+  width: 99%;
+  height: 35px;
+  border-radius: 7px;
+}
+
+.signup-page-div .signup-error {
+  color: red;
+  font-size: 13px;
+}
+
+.signup-page-div #useremail,
+#password {
+  display: block;
+  border: 1.4px solid #d6d5da;
+  margin: 8px 0px;
+  padding: 3px 10px;
+}
+
+.signup-page-div #useremail {
+  margin-bottom: 18px;
+}
+
+.signup-page-div label {
+  font-weight: 600;
+  font-size: 16px;
+  color: #333c45;
+}
+
+.signup-page-div .signup-btn {
+  margin-top: 20px;
+  color: white;
+  background-color: #09843c;
+  outline: none;
+  border: none;
+  font-size: 18px;
+}
+
+.signup-page-div input:focus {
+  outline-color: #4769b3;
+  /* color: black; */
+}
+
+.signup-page-div input::placeholder {
+  font-weight: 500;
+  color: #929ca6;
+}
+
+.signup-page-div .disabled-btn {
+  background-color: #11b555;
+}
+
+.wrapper-div .toggle-line {
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.wrapper-div .toggle-btn {
+  color: #1b65b5;
+  cursor: pointer;
+}
+
+.gender-select-div {
+  margin-top: 20px;
+}
+.gender-select-div #female {
+  margin-left: 20px;
+}

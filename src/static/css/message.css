@@ -1,0 +1,44 @@
+.message-box {
+  display: flex;
+}
+.message-box .flex1 {
+  flex: 1;
+}
+.message-main {
+  max-width: 80%;
+  margin: 5px 0px;
+  font-size: 14px;
+}
+.message-main .sender{
+  color: white;
+}
+.message-content {
+  cursor: pointer;
+  border-radius: 12px;
+  word-break: break-all;
+  padding: 10px 15px;
+  margin: 1px 0px;
+  /* box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.2); */
+}
+
+.message-main .message-time,
+.message-status {
+  font-size: 12px;
+  color: #757372;
+}
+.message-box.left-side .message-content {
+  background: #e4e6eb;
+}
+
+.message-box.left-side .message-status {
+  float: left;
+}
+
+.message-box.right-side .message-content {
+  background: #0084ff;
+  color: white;
+}
+
+.message-box.right-side .message-status {
+  float: right;
+}
