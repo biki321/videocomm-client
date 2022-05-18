@@ -17,15 +17,15 @@ function Text({ text, email }: { text: string; email: string }) {
 }
 
 function ChatBox() {
-  let dummyMsgs = [];
-  for (let i = 0; i < 5; i++) {
-    dummyMsgs.push({
-      text: "1 hi ow ru fhsdlf sfksd  fnksjfsd sjfoisdf jfisjf fsjdofjsdofj jsoifjsdjfsdjofjsd sldfs",
-      self: false,
-      email: "bikideka@gmail.com",
-    });
-  }
-  const socket = useSocketContext();
+  let dummyMsgs: ITextMsg[] = [];
+  // for (let i = 0; i < 5; i++) {
+  //   dummyMsgs.push({
+  //     text: "1 hi ow ru fhsdlf sfksd  fnksjfsd sjfoisdf jfisjf fsjdofjsdofj jsoifjsdjfsdjofjsd sldfs",
+  //     self: false,
+  //     email: "bikideka@gmail.com",
+  //   });
+  // }
+  const { socket } = useSocketContext();
   const [msgs, setMsgs] = useState<ITextMsg[]>(dummyMsgs);
   const [typedMessageData, setTypedMessageData] = useState("");
   const [sentOrReceivedMsgCount, setSentOrReceivedMsgCount] = useState(0);
@@ -77,7 +77,7 @@ function ChatBox() {
     setTypedMessageData("");
   }
   return (
-    <div className="container-chat">
+    <div className="container-chat bg-gray-300">
       {/* <div className="error">{error}</div> */}
       <div className="chat">
         {/* <div className="chat-header">

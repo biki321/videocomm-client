@@ -10,6 +10,7 @@ import { CanvasSharedSts } from "../enums/canvasSharedSts";
 import { IPeerMedia } from "../interfaces/peermedia.interface";
 import { useParams } from "react-router-dom";
 import ChatBox from "../components/ChatBox";
+import { useAuthContext } from "../contexts/auth/auth-context";
 
 function showScreenShare(consumers: IPeerMedia[] | undefined) {
   const peerMedia = consumers?.find((consumer) => consumer.screenShareStream);
@@ -43,32 +44,35 @@ enum screenOrCanvasEnum {
 }
 
 export default function Meeting() {
-  const socket = useSocketContext();
+  const { socket } = useSocketContext();
+  const { signOutUser, user } = useAuthContext();
   const {
     localCamStream,
     localScreenStream,
     consumers,
     canvasSharedSts,
+    callDrop,
     setCanvasSharedSts,
   } = useVideoConfContext();
   const [ready, setReady] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const { roomName } = useParams();
 
   useEffect(() => {
     if (canvasSharedSts === undefined || !setCanvasSharedSts) return;
 
     // during meeting if somebody share a canvas
-    socket.on("sharedCanvas", () => {
+    socket!.on("sharedCanvas", () => {
       console.log("effect meeting sharedCanvas");
       setCanvasSharedSts(CanvasSharedSts.REMOTE);
     });
-    socket.on("closeSharedCanvas", () => {
+    socket!.on("closeSharedCanvas", () => {
       setCanvasSharedSts(null);
     });
 
     return () => {
-      socket.off("sharedCanvas");
-      socket.off("closeSharedCanvas");
+      socket!.off("sharedCanvas");
+      socket!.off("closeSharedCanvas");
     };
   }, [canvasSharedSts, setCanvasSharedSts, socket]);
 
@@ -88,60 +92,77 @@ export default function Meeting() {
     screenOrCanvas = screenMediaEle ? screenOrCanvasEnum.SCREEN : null;
   } else screenOrCanvas = screenOrCanvasEnum.CANVAS;
 
+  console.log("chat", chatOpen);
+  const toggleChat = () => {
+    setChatOpen((pv) => !pv);
+  };
   return ready ? (
-    <div className="bg-gray-900 h-screen w-screen">
-      <div className=" h-92/100 flex justify-between">
+    <div className="bg-gray-900 h-screen w-screen overflow-x-hidden relative">
+      {/* <div className=" h-92/100 flex justify-between"> */}
+      <div
+        className={`p-3 h-92/100 ${
+          screenOrCanvas ? "xl:flex xl:justify-between" : ""
+        }`}
+      >
+        {screenOrCanvas === screenOrCanvasEnum.SCREEN ? (
+          <div className="flex justify-center flex-4 h-2/5 xl:h-full">
+            {screenMediaEle}
+          </div>
+        ) : screenOrCanvas === screenOrCanvasEnum.CANVAS ? (
+          <div className="flex justify-center flex-4 h-2/5 xl:h-full">
+            {<CanvasBoard />}
+          </div>
+        ) : // <div className="w-full h-2/5 xl:h-full">{<CanvasBoard />}</div>
+        null}
         <div
-          className={`p-3 ${
-            screenOrCanvas ? "xl:flex xl:justify-between" : ""
+          className={`space-y-2 flex flex-col items-center overflow-y-auto overflow-x-hidden ml-2 ${
+            screenOrCanvas
+              ? "xl:flex-1 h-3/5 xl:h-full"
+              : "space-x-2 xl:flex-row xl:justify-center xl:flex-wrap h-full"
           }`}
         >
-          {screenOrCanvas === screenOrCanvasEnum.SCREEN ? (
-            <div className="flex justify-center flex-4 h-2/5 xl:h-full">
-              {screenMediaEle}
-            </div>
-          ) : screenOrCanvas === screenOrCanvasEnum.CANVAS ? (
-            <div className="flex justify-center flex-4 h-2/5 xl:h-full">
-              {<CanvasBoard />}
-            </div>
+          {localCamStream !== undefined ? (
+            <VideoWrapper
+              maxW={screenOrCanvas ? "max-w-md xl:max-w-xs w-full" : undefined}
+              key={localCamStream?.id}
+            >
+              <PeerVideo
+                stream={localCamStream}
+                local={true}
+                email={user!.email}
+              />
+            </VideoWrapper>
           ) : null}
-          <div
-            className={`space-y-2 flex flex-col items-center overflow-y-auto overflow-x-hidden ml-2 ${
-              screenOrCanvas
-                ? "xl:flex-1 h-3/5 xl:h-full"
-                : "space-x-2 xl:flex-row xl:justify-center xl:flex-wrap h-full"
-            }`}
-          >
-            {localCamStream !== undefined ? (
+          {consumers?.map((peerMedia, index) => {
+            return (
               <VideoWrapper
                 maxW={
                   screenOrCanvas ? "max-w-md xl:max-w-xs w-full" : undefined
                 }
-                key={localCamStream?.id}
+                key={peerMedia.webCamStream ? peerMedia.webCamStream.id : index}
               >
-                <PeerVideo stream={localCamStream} local={true} />
+                <PeerVideo
+                  local={false}
+                  stream={peerMedia.webCamStream}
+                  email={peerMedia.consumers[0].appData.email}
+                />
               </VideoWrapper>
-            ) : null}
-            {consumers?.map((peerMedia, index) => {
-              return (
-                <VideoWrapper
-                  maxW={
-                    screenOrCanvas ? "max-w-md xl:max-w-xs w-full" : undefined
-                  }
-                  key={
-                    peerMedia.webCamStream ? peerMedia.webCamStream.id : index
-                  }
-                >
-                  <PeerVideo local={false} stream={peerMedia.webCamStream} />
-                </VideoWrapper>
-              );
-            })}
-          </div>
+            );
+          })}
         </div>
+      </div>
+
+      <div
+        className={`absolute top-0 w-72
+          ${!chatOpen ? "right-0" : "-right-72"}
+          ease-in-out duration-100 `}
+      >
         <ChatBox />
       </div>
+      {/* </div> */}
+
       <div className="py-2 z-10">
-        <BottomBar />
+        <BottomBar toggleChat={toggleChat} />
       </div>
     </div>
   ) : (

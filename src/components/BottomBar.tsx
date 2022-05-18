@@ -11,8 +11,12 @@ import {
   StopCanvasIcon,
   CanvasOpenIcon,
 } from "./IconComps";
+import { useAuthContext } from "../contexts/auth/auth-context";
 
-export function BottomBar() {
+interface IProps {
+  toggleChat: () => void;
+}
+export function BottomBar({ toggleChat }: IProps) {
   const {
     localMute,
     toggleMicAndVideoDuringMeeting,
@@ -23,6 +27,7 @@ export function BottomBar() {
     canvasSharedSts,
     setCanvasSharedSts,
   } = useVideoConfContext();
+  const { signOutUser } = useAuthContext();
   let navigate = useNavigate();
 
   const openLocalCanvas = () =>
@@ -100,6 +105,25 @@ export function BottomBar() {
             {canvasSharingStoppingBtn()}
             <div onClick={callDropHandle}>
               <CallDropIcon />
+            </div>
+            <div className="">
+              <button
+                className="text-white font-semibold"
+                onClick={() => {
+                  callDrop && callDrop();
+                  signOutUser && signOutUser();
+                }}
+              >
+                Sign Out
+              </button>
+            </div>
+            <div>
+              <button
+                className="text-white font-semibold"
+                onClick={() => toggleChat()}
+              >
+                msg
+              </button>
             </div>
           </div>
         )}

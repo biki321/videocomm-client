@@ -4,9 +4,10 @@ import { MicIcon } from "./IconComps";
 interface IProps {
   stream: MediaStream | null;
   local: boolean;
+  email: string | null;
 }
 
-export default function PeerVideo({ stream, local }: IProps) {
+export default function PeerVideo({ stream, local, email }: IProps) {
   console.log("at peervideo");
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
@@ -19,6 +20,7 @@ export default function PeerVideo({ stream, local }: IProps) {
 
   let videoMuted;
   let micMuted;
+  let username;
   // let showVideoEle;
 
   if (!local) {
@@ -32,6 +34,9 @@ export default function PeerVideo({ stream, local }: IProps) {
     micMuted = stream && !stream.getAudioTracks()[0].enabled;
     // showVideoEle = true;
   }
+  if (email) {
+    username = email.split("@")[0];
+  }
 
   return (
     <>
@@ -41,7 +46,7 @@ export default function PeerVideo({ stream, local }: IProps) {
             className="bg-gray-700 w-full h-full rounded-md absolute
          right-0 bottom-0 flex justify-center items-center z-10"
           >
-            <h1 className="font-bold text-xl text-white">Biki Deka</h1>
+            <h1 className="font-bold text-xl text-white">{username}</h1>
           </div>
         ) : null}
         {/* {showVideoEle ? ( */}
@@ -49,7 +54,7 @@ export default function PeerVideo({ stream, local }: IProps) {
         {/* ) : null} */}
         <div className="z-10">
           <h3 className="font-medium text-white absolute left-2 bottom-1">
-            username
+            {username}
           </h3>
           {micMuted ? (
             <div className="absolute right-2 bottom-1">

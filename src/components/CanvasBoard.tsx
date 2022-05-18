@@ -22,13 +22,13 @@ const CanvasBoard = () => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const contextRef = useRef<CanvasRenderingContext2D | null>(null);
   const canvasParentRef = useRef<HTMLDivElement | null>(null);
-  const socket = useSocketContext();
+  const { socket } = useSocketContext();
   const { canvasSharedSts } = useVideoConfContext();
 
   useEffect(() => {
     if (canvasSharedSts === CanvasSharedSts.LOCAL) {
       console.log("sharedCanvas ", canvasSharedSts);
-      socket.emit("sharedCanvas");
+      socket!.emit("sharedCanvas");
     }
     // --------------- getContext() method returns a drawing context on the canvas-----
     const canvas = canvasRef.current;
@@ -62,7 +62,7 @@ const CanvasBoard = () => {
       const w = canvas.width;
       const h = canvas.height;
 
-      socket.emit("drawing", {
+      socket!.emit("drawing", {
         x0: data.x0 / w,
         y0: data.y0 / h,
         x1: data.x1 / w,
@@ -138,7 +138,7 @@ const CanvasBoard = () => {
 
     if (canvasSharedSts === CanvasSharedSts.REMOTE) {
       console.log("canvasboard effect receive getIntialCanvasImage");
-      socket.emit("getIntialCanvasImage", (imageData: string) => {
+      socket!.emit("getIntialCanvasImage", (imageData: string) => {
         //draw the image on canvas
         const image = new Image();
         image.onload = () => {
@@ -147,9 +147,9 @@ const CanvasBoard = () => {
         image.src = imageData;
       });
     }
-    socket.on("drawing", onDrawingEvent);
+    socket!.on("drawing", onDrawingEvent);
 
-    socket.on("getIntialCanvasImage", (callback) => {
+    socket!.on("getIntialCanvasImage", (callback) => {
       const base64ImageData = canvasRef.current!.toDataURL("image/png");
       callback({ imageData: base64ImageData });
     });
@@ -179,12 +179,12 @@ const CanvasBoard = () => {
     window.addEventListener("resize", onResize, false);
 
     return () => {
-      socket.off("drawing", onDrawingEvent);
-      socket.off("getIntialCanvasImage");
+      socket!.off("drawing", onDrawingEvent);
+      socket!.off("getIntialCanvasImage");
       //when comp is unmounted inform other peer to remove the canvas
       //if this peer is host of the canvas
       if (canvasSharedSts === CanvasSharedSts.LOCAL)
-        socket.emit("closeSharedCanvas");
+        socket!.emit("closeSharedCanvas");
 
       window.removeEventListener("resize", onResize);
     };

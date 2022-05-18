@@ -1,5 +1,6 @@
 import { CameraIcon, MicIcon } from "../components/IconComps";
 import PeerVideo from "../components/PeerVideo";
+import { useAuthContext } from "../contexts/auth/auth-context";
 import { useVideoConfContext } from "../contexts/video-conf/video-conf-context";
 import { VideoWrapper } from "../pages/Meeting";
 
@@ -9,6 +10,7 @@ interface IProps {
 }
 
 export default function Permission({ setReady, roomName }: IProps) {
+  const { user } = useAuthContext();
   const { localCamStream, triggerSetup, toggleMicAndVideo, localMute } =
     useVideoConfContext();
 
@@ -24,7 +26,11 @@ export default function Permission({ setReady, roomName }: IProps) {
       <div className="relative max-w-md">
         {localCamStream !== undefined ? (
           <VideoWrapper>
-            <PeerVideo stream={localCamStream} local={true} />
+            <PeerVideo
+              stream={localCamStream}
+              local={true}
+              email={user!.email}
+            />
           </VideoWrapper>
         ) : null}
         <div className="absolute space-x-1 bottom-1 left-0 right-0 flex justify-center z-10">

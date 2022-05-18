@@ -6,7 +6,7 @@ import svg from "../static/svg/undraw_group_video_re_btu7.svg";
 function Landing() {
   const [roomName, setRoomName] = useState("");
   const navigate = useNavigate();
-  const socket = useSocketContext();
+  const { socket } = useSocketContext();
 
   const handle = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -14,7 +14,7 @@ function Landing() {
       alert("roomname should be at least 4 character long");
       return;
     }
-    socket.emit("roomExist", roomName, (exist: boolean) => {
+    socket!.emit("roomExist", roomName, (exist: boolean) => {
       if (exist) navigate(`/${roomName}`);
       else alert("room does not exist");
     });
@@ -22,12 +22,14 @@ function Landing() {
 
   const createMeeting = () => {
     console.log("createMeeting");
-    if (!socket.connected) {
-      alert("socket not connected");
-      return;
+    if (!socket!.connected) {
+      socket!.connect();
+      // socket?.emit("trigger");
+      // alert("socket not connected");
+      // return;
     }
 
-    socket.emit("createRoomName", (createdRoomName: string) => {
+    socket!.emit("createRoomName", (createdRoomName: string) => {
       console.log("create room name", createdRoomName);
       navigate(`/${createdRoomName}`);
     });

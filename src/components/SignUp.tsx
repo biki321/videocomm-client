@@ -13,7 +13,7 @@ interface IProps {
 }
 
 export default function SignUp({ setIsLogin }: IProps) {
-  const { setUser, signIn, signUp, user } = useAuthContext();
+  const { signUp, authErrorServer } = useAuthContext();
   const [inputData, setInputData] = useState({
     useremail: "",
     password: "",
@@ -51,13 +51,13 @@ export default function SignUp({ setIsLogin }: IProps) {
     e.preventDefault();
     try {
       if (signUp) {
-        const userinfo = await signUp(inputData.useremail, inputData.password);
+        await signUp(inputData.useremail, inputData.password);
         // setUser && setUser(userinfo);
         // console.log("userinfo", userinfo);
       }
     } catch (error) {}
-    setInputData({ useremail: "", password: "" });
-    setValid(false);
+    // setInputData({ useremail: "", password: "" });
+    // setValid(false);
   };
 
   const setInputDataHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,6 +67,15 @@ export default function SignUp({ setIsLogin }: IProps) {
         useremail: e.target.value,
       }));
       //if condition for email
+      // let aecDomain = false;
+      // let splits = e.target.value.split("@");
+      // if (splits.length > 1 && splits[1] === "aec.ac.in") aecDomain = true;
+
+      // setInputError((prevState) => ({
+      //   ...prevState,
+      //   useremailError: !aecDomain ? "email have to be of aec domain" : "",
+      //   useremailValid: !aecDomain ? false : true,
+      // }));
       setInputError((prevState) => ({
         ...prevState,
         useremailError: "",
@@ -96,7 +105,7 @@ export default function SignUp({ setIsLogin }: IProps) {
   return (
     <div className="">
       <div className="signup-page-div">
-        {/* <p className="signup-error">{authState.signupError}</p> */}
+        <p className="signup-error">{authErrorServer?.signUpError}</p>
         <div className="signup-name">Sign Up</div>
         <form className="signup-form" onSubmit={(e) => signUpFormSubmit(e)}>
           <label htmlFor="useremail">Email</label>

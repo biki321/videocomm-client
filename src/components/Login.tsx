@@ -12,7 +12,7 @@ interface IProps {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }
 export default function Login({ setIsLogin }: IProps) {
-  const { setUser, signIn, user } = useAuthContext();
+  const { signIn, authErrorServer } = useAuthContext();
   const [inputData, setInputData] = useState({ useremail: "", password: "" });
   // const location = useLocation<LocationState>();
   // const history = useHistory();
@@ -27,11 +27,11 @@ export default function Login({ setIsLogin }: IProps) {
     e.preventDefault();
     try {
       if (signIn) {
-        const userinfo = await signIn(inputData.useremail, inputData.password);
+        await signIn(inputData.useremail, inputData.password);
         // setUser && setUser(userinfo);
       }
     } catch (error) {}
-    setInputData({ useremail: "", password: "" });
+    // setInputData({ useremail: "", password: "" });
   };
 
   const setInputDataHandler = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -50,7 +50,7 @@ export default function Login({ setIsLogin }: IProps) {
 
   return (
     <div className="login-page-div">
-      {/* <p className="login-error">{authState.loginError}</p> */}
+      <p className="login-error">{authErrorServer?.signInError}</p>
       <div className="login-name">Sign In</div>
       <form className="login-form" onSubmit={(e) => loginFormSubmit(e)}>
         <label htmlFor="useremail">Email</label>
@@ -61,7 +61,7 @@ export default function Login({ setIsLogin }: IProps) {
           value={inputData.useremail}
           onChange={(e) => setInputDataHandler(e)}
           placeholder={"Enter email"}
-          autoComplete="off"
+          autoComplete="on"
           required
         />
 

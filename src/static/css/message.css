@@ -10,7 +10,7 @@
   font-size: 14px;
 }
 .message-main .sender{
-  color: white;
+  /* color: white; */
 }
 .message-content {
   cursor: pointer;

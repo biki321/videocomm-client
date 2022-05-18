@@ -17,6 +17,7 @@ import { ScreenSharedSts } from "../../enums/screenSharedSts";
 import { useParams } from "react-router";
 import producerParams from "./producerParams";
 import { CanvasSharedSts } from "../../enums/canvasSharedSts";
+import { useAuthContext } from "../auth/auth-context";
 
 interface IProps {
   children: JSX.Element;
@@ -84,7 +85,8 @@ const startScreenCapture = () => {
 };
 
 export function VideoConfContextProvider({ children }: IProps) {
-  const socket = useSocketContext();
+  const { socket } = useSocketContext();
+  const { user } = useAuthContext();
   const device = useRef<types.Device | null>(null);
   const rtpCapabilities = useRef<types.RtpCapabilities | null>(null);
   const producerTransport = useRef<types.Transport | null>(null);
@@ -110,6 +112,13 @@ export function VideoConfContextProvider({ children }: IProps) {
   const { roomName } = useParams();
   console.log("room name ", roomName);
 
+  //set email in producerParams appData
+  if (user) {
+    producerParams.forAudio.appData.email = user.email;
+    producerParams.forScreenShare.appData.email = user.email;
+    producerParams.forVideo.appData.email = user.email;
+  }
+
   // to toggle video, isMic = false
   const toggleMicAndVideo = (isMic: boolean) => {
     if (!localCamStream) return;
@@ -134,7 +143,7 @@ export function VideoConfContextProvider({ children }: IProps) {
     if (producer.paused) {
       producer.resume();
       producer.appData.paused = producer.paused;
-      socket.emit("producer-media-resume", {
+      socket!.emit("producer-media-resume", {
         producerId: producer?.id,
       });
       if (isMic)
@@ -143,7 +152,7 @@ export function VideoConfContextProvider({ children }: IProps) {
     } else {
       producer.pause();
       producer.appData.paused = producer.paused;
-      socket.emit("producer-media-pause", {
+      socket!.emit("producer-media-pause", {
         producerId: producer?.id,
       });
       if (isMic)
@@ -428,7 +437,7 @@ export function VideoConfContextProvider({ children }: IProps) {
 
   const joinRoom = useCallback<() => Promise<types.RtpCapabilities>>(() => {
     return new Promise((resolve, reject) => {
-      return socket.emit(
+      return socket!.emit(
         "joinRoom",
         { roomName },
         (data: { rtpCapabilities: types.RtpCapabilities; error?: string }) => {
@@ -503,13 +512,13 @@ export function VideoConfContextProvider({ children }: IProps) {
     producerTransport.current?.close();
     consumerTransport.current?.close();
 
-    socket?.emit("calldrop");
+    // socket?.emit("calldrop");
     consumersDispatch({
       type: "CONSUMERS_CLEAN",
     });
     setLocalCamStream(null);
     setLocalScreenStream(null);
-    // socket.disconnect();
+    socket!.disconnect();
   };
 
   //this effect only for socket event listeners
@@ -620,8 +629,13 @@ export function VideoConfContextProvider({ children }: IProps) {
   }, []);
 
   const triggerSetup = () => {
-    if (socket.connected) socket?.emit("trigger");
-    else alert("socket not connected");
+    if (socket!.connected) socket?.emit("trigger");
+    else {
+      // alert("socket not connected");
+      console.log("socket disconnected so retrying ");
+      socket!.connect();
+      socket?.emit("trigger");
+    }
   };
 
   return (
