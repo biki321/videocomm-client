@@ -45,13 +45,12 @@ enum screenOrCanvasEnum {
 
 export default function Meeting() {
   const { socket } = useSocketContext();
-  const { signOutUser, user } = useAuthContext();
+  const { user } = useAuthContext();
   const {
     localCamStream,
     localScreenStream,
     consumers,
     canvasSharedSts,
-    callDrop,
     setCanvasSharedSts,
   } = useVideoConfContext();
   const [ready, setReady] = useState(false);

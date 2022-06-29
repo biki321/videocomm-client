@@ -66,21 +66,21 @@ export default function SignUp({ setIsLogin }: IProps) {
         ...prevState,
         useremail: e.target.value,
       }));
-      //if condition for email
-      // let aecDomain = false;
-      // let splits = e.target.value.split("@");
-      // if (splits.length > 1 && splits[1] === "aec.ac.in") aecDomain = true;
+      // if condition for email
+      let aecDomain = false;
+      let splits = e.target.value.split("@");
+      if (splits.length > 1 && splits[1] === "aec.ac.in") aecDomain = true;
 
-      // setInputError((prevState) => ({
-      //   ...prevState,
-      //   useremailError: !aecDomain ? "email have to be of aec domain" : "",
-      //   useremailValid: !aecDomain ? false : true,
-      // }));
       setInputError((prevState) => ({
         ...prevState,
-        useremailError: "",
-        useremailValid: true,
+        useremailError: !aecDomain ? "email have to be of aec domain" : "",
+        useremailValid: !aecDomain ? false : true,
       }));
+      // setInputError((prevState) => ({
+      //   ...prevState,
+      //   useremailError: "",
+      //   useremailValid: true,
+      // }));
     } else if (e.target.name === "password") {
       setInputData((prevState) => ({
         ...prevState,

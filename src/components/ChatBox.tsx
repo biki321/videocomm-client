@@ -7,14 +7,14 @@ import "../static/css/chat.css";
 import Message from "./Message";
 import { useAuthContext } from "../contexts/auth/auth-context";
 
-function Text({ text, email }: { text: string; email: string }) {
-  return (
-    <div>
-      <div className="font-semibold text-sm">{email.split("@")[0]}</div>
-      <p className="text-sm break-words">{text}</p>
-    </div>
-  );
-}
+// function Text({ text, email }: { text: string; email: string }) {
+//   return (
+//     <div>
+//       <div className="font-semibold text-sm">{email.split("@")[0]}</div>
+//       <p className="text-sm break-words">{text}</p>
+//     </div>
+//   );
+// }
 
 function ChatBox() {
   let dummyMsgs: ITextMsg[] = [];

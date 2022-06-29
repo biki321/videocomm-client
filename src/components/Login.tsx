@@ -3,11 +3,11 @@ import { useState } from "react";
 import { useAuthContext } from "../contexts/auth/auth-context";
 import "../static/css/login.css";
 
-interface LocationState {
-  from: {
-    pathname: string;
-  };
-}
+// interface LocationState {
+//   from: {
+//     pathname: string;
+//   };
+// }
 interface IProps {
   setIsLogin: React.Dispatch<React.SetStateAction<boolean>>;
 }
