@@ -9,7 +9,7 @@ import { useVideoConfContext } from "../contexts/video-conf/video-conf-context";
 import { CanvasSharedSts } from "../enums/canvasSharedSts";
 import { IPeerMedia } from "../interfaces/peermedia.interface";
 import { useParams } from "react-router-dom";
-import ChatBox from "../components/ChatBox";
+// import ChatBox from "../components/ChatBox";
 import { useAuthContext } from "../contexts/auth/auth-context";
 
 function showScreenShare(consumers: IPeerMedia[] | undefined) {
@@ -151,13 +151,13 @@ export default function Meeting() {
         </div>
       </div>
 
-      <div
+      {/* <div
         className={`absolute top-0 w-72
           ${!chatOpen ? "right-0" : "-right-72"}
           ease-in-out duration-100 `}
       >
         <ChatBox />
-      </div>
+      </div> */}
       {/* </div> */}
 
       <div className="py-2 z-10">

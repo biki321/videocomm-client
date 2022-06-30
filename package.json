@@ -26,7 +26,7 @@
   },
   "scripts": {
     "eject": "react-scripts eject",
-    "start": "PORT=3001 craco start",
+    "start": "HTTPS=true PORT=3001 SSL_CRT_FILE='./.cert/cert.pem' SSL_KEY_FILE='./.cert/key.pem' craco start",
     "build": "craco build",
     "test": "craco test"
   },

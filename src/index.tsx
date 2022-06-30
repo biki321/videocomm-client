@@ -18,3 +18,6 @@ ReactDOM.render(
 reportWebVitals();
 
 // http://172.23.242.88:3001
+
+// this app uses https in dev  . for that use mkcert and
+// follow https://github.com/Microsoft/WSL/issues/3161
